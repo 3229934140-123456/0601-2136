@@ -165,10 +165,21 @@
 .roleBadge {
   margin-left: 12rpx;
   padding: 2rpx 10rpx;
-  background: rgba(255, 107, 53, 0.1);
-  color: $color-primary;
+  background: rgba(22, 93, 255, 0.12);
+  color: #165dff;
   font-size: $font-size-xs;
   border-radius: $radius-xs;
+  font-weight: $font-weight-medium;
+}
+
+.leaderBadge {
+  margin-left: 12rpx;
+  padding: 2rpx 12rpx;
+  background: linear-gradient(135deg, #fff8dc 0%, #ffd700 100%);
+  color: #a67c00;
+  font-size: $font-size-xs;
+  border-radius: $radius-xs;
+  font-weight: $font-weight-semibold;
 }
 
 .memberDistance {
@@ -176,10 +187,32 @@
   color: $color-text-tertiary;
 }
 
-.memberRank {
+.memberRankBadge {
+  width: 56rpx;
   font-size: $font-size-sm;
   color: $color-primary;
-  font-weight: $font-weight-medium;
+  font-weight: $font-weight-semibold;
+  margin-right: $spacing-xs;
+}
+
+.memberRight {
+  margin-left: $spacing-xs;
+}
+
+.topBadge {
+  font-size: 36rpx;
+}
+
+.memberItem.mine {
+  background: rgba(255, 107, 53, 0.04);
+  border-left: 4rpx solid $color-primary;
+  margin: 0;
+  border-radius: 0;
+}
+
+.rankingItem.myTeamRank {
+  background: rgba(255, 107, 53, 0.04);
+  border-left: 4rpx solid $color-primary;
 }
 
 .rankingList {

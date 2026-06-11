@@ -28,6 +28,16 @@ export interface Notification {
   isRead: boolean;
 }
 
+const mockAvatars = [
+  'https://picsum.photos/seed/mem1/200/200',
+  'https://picsum.photos/seed/mem2/200/200',
+  'https://picsum.photos/seed/mem3/200/200',
+  'https://picsum.photos/seed/mem4/200/200',
+  'https://picsum.photos/seed/mem5/200/200',
+  'https://picsum.photos/seed/mem6/200/200'
+];
+const mockNames = ['王小雅', '李大伟', '刘浩然', '陈美丽', '赵俊杰', '孙雨萱', '周子轩', '吴梦琪', '郑皓轩', '钱诗涵'];
+
 interface AppState {
   activities: Activity[];
   checkins: CheckinRecord[];
@@ -38,18 +48,24 @@ interface AppState {
   exchangeRecords: ExchangeRecord[];
   notifications: Notification[];
   invitations: { code: string; teamId: string }[];
+  userSignedUpActivities: string[];
 
   addActivity: (activity: Omit<Activity, 'id' | 'participants' | 'status'>) => void;
-  addCheckin: (checkin: Omit<CheckinRecord, 'id' | 'likes' | 'isLiked' | 'status' | 'pace' | 'calories'>) => boolean;
+  addCheckin: (checkin: Omit<CheckinRecord, 'id' | 'likes' | 'isLiked' | 'status' | 'pace' | 'calories' | 'checkinTime'>) => boolean;
   createTeam: (team: { name: string; slogan: string; avatar?: string; maxMembers: number }) => string;
   joinTeamByCode: (code: string) => { success: boolean; message: string };
   addTeamMember: (teamId: string, member: Omit<TeamMember, 'role' | 'totalDistance' | 'joinTime'>) => void;
   inviteTeammate: (teamId: string) => string;
+  simulateInviteJoin: (teamId: string) => TeamMember | null;
   exchangeReward: (rewardId: string) => { success: boolean; message: string };
   pushNotification: (notification: Omit<Notification, 'id' | 'createTime' | 'isRead'>) => void;
   markNotificationRead: (id: string) => void;
+  markAllNotificationsRead: () => void;
+  clearNotifications: () => void;
+  clearExchangeRecords: () => void;
   likeCheckin: (id: string) => void;
   exportWinners: (activityId: string) => string;
+  signupActivity: (activityId: string) => { success: boolean; message: string };
 }
 
 const STORAGE_KEY = 'sport_community_store_v1';
@@ -77,7 +93,8 @@ const saveState = (state: Partial<AppState>) => {
       user: state.user,
       exchangeRecords: state.exchangeRecords,
       notifications: state.notifications,
-      invitations: state.invitations
+      invitations: state.invitations,
+      userSignedUpActivities: state.userSignedUpActivities
     }));
   } catch (e) {
     console.error('保存本地存储失败:', e);
@@ -86,6 +103,9 @@ const saveState = (state: Partial<AppState>) => {
 
 const genId = (prefix = 'id') => `${prefix}_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
 const now = () => new Date().toISOString();
+const randomName = () => mockNames[Math.floor(Math.random() * mockNames.length)];
+const randomAvatar = () => mockAvatars[Math.floor(Math.random() * mockAvatars.length)];
+const randomDistance = (min = 5, max = 120) => Number((min + Math.random() * (max - min)).toFixed(1));
 
 const persisted = loadState();
 
@@ -99,6 +119,7 @@ export const useAppStore = create<AppState>((set, get) => ({
   exchangeRecords: persisted?.exchangeRecords || [],
   notifications: persisted?.notifications || [],
   invitations: persisted?.invitations || [],
+  userSignedUpActivities: persisted?.userSignedUpActivities || [],
 
   addActivity: (activityData) => {
     const newActivity: Activity = {
@@ -113,6 +134,28 @@ export const useAppStore = create<AppState>((set, get) => ({
       saveState(next);
       return next;
     });
+  },
+
+  signupActivity: (activityId) => {
+    const { activities, userSignedUpActivities } = get();
+    const activity = activities.find(a => a.id === activityId);
+    if (!activity) return { success: false, message: '活动不存在' };
+    if (activity.status === 'ended') return { success: false, message: '活动已结束' };
+    if (userSignedUpActivities.includes(activityId)) return { success: false, message: '您已报名该活动' };
+    if (activity.participants >= activity.maxParticipants) return { success: false, message: '活动人数已满' };
+
+    set(state => {
+      const next = {
+        ...state,
+        activities: state.activities.map(a =>
+          a.id === activityId ? { ...a, participants: a.participants + 1 } : a
+        ),
+        userSignedUpActivities: [...state.userSignedUpActivities, activityId]
+      };
+      saveState(next);
+      return next;
+    });
+    return { success: true, message: '报名成功！' };
   },
 
   addCheckin: (checkinData) => {
@@ -151,7 +194,28 @@ export const useAppStore = create<AppState>((set, get) => ({
     };
 
     set(state => {
-      const next = { ...state, checkins: [newCheckin, ...state.checkins] };
+      const next = {
+        ...state,
+        checkins: [newCheckin, ...state.checkins],
+        user: {
+          ...state.user,
+          totalDistance: Number((state.user.totalDistance + distance).toFixed(1)),
+          totalCheckins: state.user.totalCheckins + 1,
+          totalPoints: state.user.totalPoints + Math.round(distance * 10)
+        },
+        teams: state.teams.map(t => {
+          const isMember = t.members.some(m => m.id === state.user.id);
+          if (!isMember) return t;
+          return {
+            ...t,
+            totalDistance: Number((t.totalDistance + distance).toFixed(1)),
+            members: t.members.map(m => m.id === state.user.id
+              ? { ...m, totalDistance: Number((m.totalDistance + distance).toFixed(1)) }
+              : m
+            )
+          };
+        })
+      };
       saveState(next);
       return next;
     });
@@ -171,7 +235,7 @@ export const useAppStore = create<AppState>((set, get) => ({
       avatar: avatar || `https://picsum.photos/seed/${teamId}/200/200`,
       memberCount: 1,
       maxMembers,
-      totalDistance: 0,
+      totalDistance: user.totalDistance,
       rank: 0,
       leaderId: user.id,
       leaderName: user.name,
@@ -234,7 +298,7 @@ export const useAppStore = create<AppState>((set, get) => ({
             ...t,
             memberCount: t.memberCount + 1,
             members: [...t.members, newMember],
-            totalDistance: t.totalDistance + user.totalDistance
+            totalDistance: Number((t.totalDistance + user.totalDistance).toFixed(1))
           };
         }
         return t;
@@ -295,8 +359,57 @@ export const useAppStore = create<AppState>((set, get) => ({
     return code;
   },
 
+  simulateInviteJoin: (teamId) => {
+    const { teams } = get();
+    const team = teams.find(t => t.id === teamId);
+    if (!team) {
+      Taro.showToast({ title: '队伍不存在', icon: 'none' });
+      return null;
+    }
+    if (team.memberCount >= team.maxMembers) {
+      Taro.showToast({ title: '队伍已满员', icon: 'none' });
+      return null;
+    }
+
+    const dist = randomDistance(5, 80);
+    const newMember: TeamMember = {
+      id: genId('user'),
+      name: randomName(),
+      avatar: randomAvatar(),
+      role: 'member',
+      totalDistance: dist,
+      joinTime: now()
+    };
+
+    set(state => {
+      const next = {
+        ...state,
+        teams: state.teams.map(t =>
+          t.id === teamId
+            ? {
+                ...t,
+                memberCount: t.memberCount + 1,
+                members: [...t.members, newMember],
+                totalDistance: Number((t.totalDistance + dist).toFixed(1))
+              }
+            : t
+        )
+      };
+      saveState(next);
+      return next;
+    });
+
+    get().pushNotification({
+      title: '队友加入提醒',
+      content: `${newMember.name}通过您的邀请码加入了队伍「${team.name}」，欢迎新队友！`,
+      type: 'activity'
+    });
+    Taro.showToast({ title: `${newMember.name}加入了队伍`, icon: 'success' });
+    return newMember;
+  },
+
   exchangeReward: (rewardId) => {
-    const { rewards, user } = get();
+    const { rewards, user, pushNotification: pn } = get();
     const reward = rewards.find(r => r.id === rewardId);
     
     if (!reward) {
@@ -331,6 +444,13 @@ export const useAppStore = create<AppState>((set, get) => ({
       saveState(next);
       return next;
     });
+
+    pn({
+      title: '兑换成功',
+      content: `您已成功兑换"${reward.name}"，消耗${reward.points}积分，可在兑换记录中查看。`,
+      type: 'reward'
+    });
+
     return { success: true, message: '兑换成功！' };
   },
 
@@ -359,6 +479,36 @@ export const useAppStore = create<AppState>((set, get) => ({
       saveState(next);
       return next;
     });
+  },
+
+  markAllNotificationsRead: () => {
+    set(state => {
+      const next = {
+        ...state,
+        notifications: state.notifications.map(n => ({ ...n, isRead: true }))
+      };
+      saveState(next);
+      return next;
+    });
+    Taro.showToast({ title: '全部已读', icon: 'success' });
+  },
+
+  clearNotifications: () => {
+    set(state => {
+      const next = { ...state, notifications: [] };
+      saveState(next);
+      return next;
+    });
+    Taro.showToast({ title: '已清空消息', icon: 'success' });
+  },
+
+  clearExchangeRecords: () => {
+    set(state => {
+      const next = { ...state, exchangeRecords: [] };
+      saveState(next);
+      return next;
+    });
+    Taro.showToast({ title: '已清空兑换记录', icon: 'success' });
   },
 
   likeCheckin: (id) => {

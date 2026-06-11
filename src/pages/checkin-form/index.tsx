@@ -1,6 +1,6 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { View, Text, Input, Textarea, Image, Button } from '@tarojs/components';
-import Taro from '@tarojs/taro';
+import Taro, { useRouter } from '@tarojs/taro';
 import classnames from 'classnames';
 import styles from './index.module.scss';
 import { useAppStore } from '@/store';
@@ -8,14 +8,16 @@ import { formatDate } from '@/utils';
 import { currentUser } from '@/data/user';
 
 const CheckinFormPage: React.FC = () => {
+  const router = useRouter();
   const { activities, addCheckin } = useAppStore();
+  const prefillActivityId = router.params.activityId || '';
 
   const availableActivities = useMemo(() =>
     activities.filter(a => a.status === 'ongoing'),
     [activities]
   );
 
-  const [activityId, setActivityId] = useState<string>(availableActivities[0]?.id || '');
+  const [activityId, setActivityId] = useState<string>(prefillActivityId || availableActivities[0]?.id || '');
   const [distance, setDistance] = useState('');
   const [hours, setHours] = useState('0');
   const [minutes, setMinutes] = useState('30');
@@ -23,6 +25,12 @@ const CheckinFormPage: React.FC = () => {
   const [comment, setComment] = useState('');
   const [screenshot, setScreenshot] = useState('');
   const [submitting, setSubmitting] = useState(false);
+
+  useEffect(() => {
+    if (prefillActivityId && !activityId) {
+      setActivityId(prefillActivityId);
+    }
+  }, [prefillActivityId]);
 
   const selectedActivity = activities.find(a => a.id === activityId);
   const timeHint = useMemo(() => {
@@ -97,6 +105,11 @@ const CheckinFormPage: React.FC = () => {
 
   return (
     <View className={styles.page}>
+      {prefillActivityId && (
+        <View className={styles.prefillHint}>
+          <Text>✅ 已为您默认选择活动「{selectedActivity?.title || ''}」</Text>
+        </View>
+      )}
       <View className={styles.formSection}>
         <Text className={styles.sectionTitle}>选择活动</Text>
         {availableActivities.length === 0 ? (

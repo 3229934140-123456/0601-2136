@@ -1,98 +1,139 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { View, Text, Image, ScrollView, Button } from '@tarojs/components';
 import Taro, { useRouter } from '@tarojs/taro';
 import classnames from 'classnames';
 import styles from './index.module.scss';
-import { getActivityById } from '@/data/activities';
+import { useAppStore } from '@/store';
 import type { Activity } from '@/types';
-import { getStatusText, formatDate } from '@/utils';
+import { getStatusText, formatDate, formatDistance } from '@/utils';
 
 const ActivityDetailPage: React.FC = () => {
   const router = useRouter();
-  const [activity, setActivity] = useState<Activity | null>(null);
-  const [isSignedUp, setIsSignedUp] = useState<boolean>(false);
+  const {
+    activities,
+    checkins,
+    user,
+    userSignedUpActivities,
+    signupActivity,
+    pushNotification
+  } = useAppStore();
 
-  useEffect(() => {
-    const id = router.params.id;
-    console.log('[ActivityDetail] 活动ID:', id);
-    if (id) {
-      const data = getActivityById(id);
-      if (data) {
-        setActivity(data);
-      }
-    }
-  }, [router.params.id]);
+  const activityId = router.params.id || '';
+  const activity: Activity | undefined = useMemo(
+    () => activities.find(a => a.id === activityId),
+    [activities, activityId]
+  );
+
+  const isSignedUp = useMemo(
+    () => userSignedUpActivities.includes(activityId),
+    [userSignedUpActivities, activityId]
+  );
+
+  const activityCheckins = useMemo(
+    () => checkins.filter(c => c.activityId === activityId),
+    [checkins, activityId]
+  );
+
+  const activityTotalDistance = useMemo(
+    () => activityCheckins.reduce((sum, c) => sum + c.distance, 0),
+    [activityCheckins]
+  );
+
+  const activityCheckinUsers = useMemo(() => {
+    const ids = new Set(activityCheckins.map(c => c.userId));
+    return ids.size;
+  }, [activityCheckins]);
+
+  const myProgress = useMemo(() => {
+    const mine = activityCheckins.filter(c => c.userId === user.id);
+    return mine.reduce((sum, c) => sum + c.distance, 0);
+  }, [activityCheckins, user.id]);
 
   const handleSignup = () => {
     if (!activity) return;
-    
     if (activity.status === 'ended') {
-      Taro.showToast({
-        title: '活动已结束',
-        icon: 'none'
-      });
+      Taro.showToast({ title: '活动已结束', icon: 'none' });
       return;
     }
-    
     if (isSignedUp) {
-      Taro.showToast({
-        title: '已报名成功',
-        icon: 'success'
-      });
+      Taro.showToast({ title: '您已报名', icon: 'none' });
       return;
     }
-
     Taro.showModal({
       title: '确认报名',
       content: `确定要参加"${activity.title}"吗？`,
       success: (res) => {
         if (res.confirm) {
-          console.log('[ActivityDetail] 报名活动:', activity.id);
-          Taro.showLoading({ title: '报名中...' });
-          setTimeout(() => {
-            Taro.hideLoading();
-            setIsSignedUp(true);
-            Taro.showToast({
-              title: '报名成功！',
-              icon: 'success'
+          const result = signupActivity(activity.id);
+          if (result.success) {
+            pushNotification({
+              title: '报名成功',
+              content: `您已成功报名"${activity.title}"，活动目标${activity.targetDistance}km，请在活动期间完成打卡。`,
+              type: 'activity',
+              activityId: activity.id
             });
-          }, 1000);
+          } else {
+            Taro.showToast({ title: result.message, icon: 'none' });
+          }
         }
       }
     });
   };
 
+  const handleCheckin = () => {
+    if (!activity) return;
+    if (activity.status !== 'ongoing') {
+      Taro.showToast({
+        title: activity.status === 'upcoming' ? '活动尚未开始' : '活动已结束',
+        icon: 'none'
+      });
+      return;
+    }
+    if (!isSignedUp) {
+      Taro.showToast({ title: '请先报名再打卡', icon: 'none' });
+      return;
+    }
+    Taro.navigateTo({
+      url: `/pages/checkin-form/index?activityId=${activity.id}`
+    });
+  };
+
   const handleShare = () => {
-    console.log('[ActivityDetail] 分享活动');
     Taro.showActionSheet({
       itemList: ['分享给好友', '分享到朋友圈', '生成海报'],
-      success: () => {
-        Taro.showToast({
-          title: '分享成功',
-          icon: 'success'
-        });
-      }
+      success: () => Taro.showToast({ title: '分享成功', icon: 'success' })
     });
   };
 
   const handleViewResult = () => {
-    console.log('[ActivityDetail] 查看活动成果');
     Taro.navigateTo({
-      url: '/pages/activity-result/index'
+      url: `/pages/activity-result/index?id=${activityId}`
     });
   };
 
   if (!activity) {
     return (
-      <View className={styles.page}>
-        <View style={{ textAlign: 'center', padding: '200rpx 0' }}>
-          <Text style={{ color: '#86909c' }}>加载中...</Text>
+      <ScrollView className={styles.page} scrollY>
+        <View style={{ textAlign: 'center', padding: '200rpx 40rpx' }}>
+          <Text style={{ fontSize: '120rpx' }}>😢</Text>
+          <Text style={{ display: 'block', marginTop: '24rpx', color: '#86909c', fontSize: '32rpx' }}>
+            活动不存在或已被删除
+          </Text>
+          <Button
+            style={{ marginTop: '40rpx', width: '320rpx' }}
+            onClick={() => Taro.switchTab({ url: '/pages/activity/index' })}
+          >
+            返回活动广场
+          </Button>
         </View>
-      </View>
+      </ScrollView>
     );
   }
 
   const progressPercent = Math.min((activity.participants / activity.maxParticipants) * 100, 100);
+  const myProgressPercent = activity.targetDistance > 0
+    ? Math.min((myProgress / activity.targetDistance) * 100, 100)
+    : 0;
 
   return (
     <ScrollView className={styles.page} scrollY>
@@ -138,6 +179,39 @@ const ActivityDetailPage: React.FC = () => {
           </View>
         </View>
 
+        {isSignedUp && (
+          <View className={styles.progressSection}>
+            <Text className={styles.sectionTitle}>我的进度</Text>
+            <View className={styles.progressBar}>
+              <View className={styles.progressFill} style={{ width: `${myProgressPercent}%`, background: 'linear-gradient(90deg, #00b42a 0%, #23c343 100%)' }} />
+            </View>
+            <View className={styles.progressInfo}>
+              <Text>
+                累计 <Text className={styles.progressHighlight}>{formatDistance(myProgress)}</Text> km
+              </Text>
+              <Text>目标 {activity.targetDistance} km</Text>
+            </View>
+          </View>
+        )}
+
+        <View className={styles.progressSection}>
+          <Text className={styles.sectionTitle}>活动累计数据</Text>
+          <View className={styles.statsRow}>
+            <View className={styles.statItem}>
+              <Text className={styles.statValue}>{formatDistance(activityTotalDistance)}</Text>
+              <Text className={styles.statLabel}>累计里程(km)</Text>
+            </View>
+            <View className={styles.statItem}>
+              <Text className={styles.statValue}>{activityCheckins.length}</Text>
+              <Text className={styles.statLabel}>打卡次数</Text>
+            </View>
+            <View className={styles.statItem}>
+              <Text className={styles.statValue}>{activityCheckinUsers}</Text>
+              <Text className={styles.statLabel}>参与人数</Text>
+            </View>
+          </View>
+        </View>
+
         <View className={styles.rulesSection}>
           <Text className={styles.sectionTitle}>活动规则</Text>
           {activity.rules.map((rule, index) => (
@@ -173,10 +247,7 @@ const ActivityDetailPage: React.FC = () => {
         )}
 
         {activity.status === 'ended' && (
-          <View 
-            className={styles.rewardSection}
-            onClick={handleViewResult}
-          >
+          <View className={styles.rewardSection} onClick={handleViewResult}>
             <View className={styles.rewardContent}>
               <Text className={styles.rewardIcon}>📊</Text>
               <View className={styles.rewardText}>
@@ -190,18 +261,22 @@ const ActivityDetailPage: React.FC = () => {
       </View>
 
       <View className={styles.bottomBar}>
-        <Button className={styles.shareButton} onClick={handleShare}>
-          📤
-        </Button>
-        <Button
-          className={classnames(
-            styles.signupButton,
-            (activity.status === 'ended' || isSignedUp) && styles.disabled
-          )}
-          onClick={handleSignup}
-        >
-          {activity.status === 'ended' ? '活动已结束' : isSignedUp ? '已报名 ✓' : '立即报名'}
-        </Button>
+        <Button className={styles.shareButton} onClick={handleShare}>📤</Button>
+        {activity.status === 'ongoing' && isSignedUp ? (
+          <Button className={classnames(styles.signupButton, styles.checkin)} onClick={handleCheckin}>
+            去打卡 🏃
+          </Button>
+        ) : (
+          <Button
+            className={classnames(
+              styles.signupButton,
+              (activity.status === 'ended' || isSignedUp) && styles.disabled
+            )}
+            onClick={handleSignup}
+          >
+            {activity.status === 'ended' ? '活动已结束' : isSignedUp ? '已报名 ✓' : '立即报名'}
+          </Button>
+        )}
       </View>
     </ScrollView>
   );

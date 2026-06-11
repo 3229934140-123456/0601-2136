@@ -16,7 +16,7 @@ const tabs = [
 ];
 
 const RewardPage: React.FC = () => {
-  const { rewards, user, exchangeRecords, exchangeReward, pushNotification } = useAppStore();
+  const { rewards, user, exchangeRecords, exchangeReward, clearExchangeRecords } = useAppStore();
   const [activeTab, setActiveTab] = useState<string>('prize');
 
   const filteredRewards = useMemo(() => {
@@ -42,17 +42,7 @@ const RewardPage: React.FC = () => {
       content: `确定用 ${reward.points} 积分兑换"${reward.name}"吗？`,
       success: (res) => {
         if (res.confirm) {
-          const result = exchangeReward(reward.id);
-          if (result.success) {
-            pushNotification({
-              title: '兑换成功',
-              content: `您已成功兑换"${reward.name}"，消耗${reward.points}积分，可在兑换记录中查看。`,
-              type: 'reward'
-            });
-            Taro.showToast({ title: result.message, icon: 'success' });
-          } else {
-            Taro.showToast({ title: result.message, icon: 'none' });
-          }
+          exchangeReward(reward.id);
         }
       }
     });
@@ -60,6 +50,17 @@ const RewardPage: React.FC = () => {
 
   const handleTabClick = (key: string) => {
     setActiveTab(key);
+  };
+
+  const handleClearRecords = () => {
+    if (exchangeRecords.length === 0) return;
+    Taro.showModal({
+      title: '清空记录',
+      content: `确定清空${exchangeRecords.length}条兑换记录吗？此操作不可恢复。`,
+      success: (res) => {
+        if (res.confirm) clearExchangeRecords();
+      }
+    });
   };
 
   const myBadges = badges.filter(b => b.obtainDate);
@@ -146,7 +147,14 @@ const RewardPage: React.FC = () => {
 
       {activeTab === 'record' && (
         <View className={styles.section}>
-          <Text className={styles.sectionTitle}>兑换记录</Text>
+          <View className={styles.sectionHeader}>
+            <Text className={styles.sectionTitle} style={{ marginBottom: 0 }}>
+              兑换记录（{exchangeRecords.length}）
+            </Text>
+            {exchangeRecords.length > 0 && (
+              <Text className={styles.clearBtn} onClick={handleClearRecords}>清空</Text>
+            )}
+          </View>
           {exchangeRecords.length === 0 ? (
             <View style={{ textAlign: 'center', padding: '80rpx 0', color: '#86909c' }}>
               暂无兑换记录

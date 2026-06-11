@@ -135,6 +135,34 @@
   font-weight: $font-weight-medium;
 }
 
+.statsRow {
+  display: flex;
+  gap: $spacing-sm;
+  margin-top: $spacing-xs;
+}
+
+.statItem {
+  flex: 1;
+  background: $color-bg-page;
+  border-radius: $radius-md;
+  padding: $spacing-md $spacing-sm;
+  text-align: center;
+}
+
+.statValue {
+  display: block;
+  font-size: $font-size-xl;
+  font-weight: $font-weight-bold;
+  color: $color-primary;
+  margin-bottom: 4rpx;
+}
+
+.statLabel {
+  display: block;
+  font-size: $font-size-xs;
+  color: $color-text-tertiary;
+}
+
 .rulesSection {
   background: $color-bg-card;
   border-radius: $radius-lg;
@@ -286,5 +314,10 @@
   &.disabled {
     background: $color-text-disabled;
     box-shadow: none;
+  }
+
+  &.checkin {
+    background: linear-gradient(135deg, #00b42a 0%, #23c343 100%);
+    box-shadow: 0 4rpx 16rpx rgba(0, 180, 42, 0.3);
   }
 }

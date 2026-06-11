@@ -6,6 +6,17 @@
   padding: $spacing-md $page-spacing 200rpx;
 }
 
+.prefillHint {
+  background: rgba(0, 180, 42, 0.08);
+  border: 2rpx solid rgba(0, 180, 42, 0.2);
+  color: #00b42a;
+  font-size: $font-size-sm;
+  font-weight: $font-weight-medium;
+  padding: $spacing-md $spacing-lg;
+  border-radius: $radius-lg;
+  margin-bottom: $spacing-md;
+}
+
 .formSection {
   background: $color-bg-card;
   border-radius: $radius-lg;

@@ -271,3 +271,18 @@
   font-size: $font-size-xs;
   color: #00b42a;
 }
+
+.sectionHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: $spacing-md;
+}
+
+.clearBtn {
+  font-size: $font-size-sm;
+  color: #f53f3f;
+  padding: $spacing-xs $spacing-sm;
+  background: rgba(245, 63, 63, 0.08);
+  border-radius: $radius-sm;
+}

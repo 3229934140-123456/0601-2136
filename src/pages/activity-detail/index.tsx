@@ -220,11 +220,11 @@ const ActivityDetailPage: React.FC = () => {
             </View>
             <View className={styles.progressInfo}>
               <Text>
-                累计 <Text className={styles.progressHighlight}>{formatDistance(myProgress)}</Text> km
+                累计 <Text className={styles.progressHighlight}>{formatDistance(myProgress)}</Text>
               </Text>
               <Text>
                 {remainingDistance > 0
-                  ? `还差 ${formatDistance(remainingDistance)} km 完赛`
+                  ? `还差 ${formatDistance(remainingDistance)} 完赛`
                   : isFinished
                     ? <Text style={{ color: '#00b42a', fontWeight: 600 }}>🎉 已完赛</Text>
                     : `目标 ${activity.targetDistance} km`

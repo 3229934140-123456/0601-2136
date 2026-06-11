@@ -26,8 +26,17 @@ const recordTabs = [
 ];
 
 const RewardPage: React.FC = () => {
-  const { rewards, user, exchangeRecords, exchangeFilter, exchangeReward, clearExchangeRecords, setExchangeFilter } = useAppStore();
+  const { rewards, user, exchangeRecords, exchangeFilter, exchangeReward, clearExchangeRecords, setExchangeFilter, confirmExchange } = useAppStore();
   const [activeTab, setActiveTab] = useState<string>('prize');
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [pendingRecordId, setPendingRecordId] = useState<string>('');
+  const [pickupMethod, setPickupMethod] = useState<'delivery' | 'selfpickup'>('delivery');
+  const [deliveryAddress, setDeliveryAddress] = useState('');
+  const [pickupStore, setPickupStore] = useState('');
+  const [newAddress, setNewAddress] = useState('');
+  const [newStore, setNewStore] = useState('');
+
+  const storeOptions = ['朝阳大悦城店', '海淀中关村店', '东城王府井店', '西城金融街店'];
 
   const filteredRewards = useMemo(() => {
     if (activeTab === 'badge' || activeTab === 'record') return [];
@@ -75,6 +84,30 @@ const RewardPage: React.FC = () => {
 
   const handleRecordFilter = (key: string) => {
     setExchangeFilter(key as AppState['exchangeFilter']);
+  };
+
+  const handleFillPickup = (recordId: string) => {
+    setPendingRecordId(recordId);
+    setPickupMethod('delivery');
+    setNewAddress('');
+    setNewStore(storeOptions[0]);
+    setShowConfirmModal(true);
+  };
+
+  const handleConfirmPickup = () => {
+    if (pickupMethod === 'delivery' && !newAddress.trim()) {
+      Taro.showToast({ title: '请填写收件地址', icon: 'none' });
+      return;
+    }
+    confirmExchange(
+      pendingRecordId,
+      pickupMethod,
+      pickupMethod === 'delivery' ? newAddress.trim() : undefined,
+      pickupMethod === 'selfpickup' ? newStore : undefined
+    );
+    setShowConfirmModal(false);
+    setDeliveryAddress(newAddress.trim());
+    setPickupStore(newStore);
   };
 
   const filteredRecords = useMemo(() => {
@@ -202,17 +235,89 @@ const RewardPage: React.FC = () => {
                   <View className={styles.recordInfo}>
                     <Text className={styles.recordName}>{record.rewardName}</Text>
                     <Text className={styles.recordTime}>{formatDateTime(record.exchangeTime)}</Text>
+                    {record.status === 'completed' && record.pickupMethod && (
+                      <Text className={styles.recordPickup}>
+                        {record.pickupMethod === 'delivery'
+                          ? `📦 邮寄：${record.deliveryAddress}`
+                          : `🏪 自取：${record.pickupStore}`
+                        }
+                      </Text>
+                    )}
                   </View>
                   <View className={styles.recordRight}>
                     <Text className={styles.recordPoints}>-{record.points}积分</Text>
-                    <Text className={classnames(styles.recordStatus, record.status === 'completed' ? styles.completed : styles.pending)}>
-                      {record.status === 'completed' ? '已完成' : '待领取'}
-                    </Text>
+                    {record.status === 'pending' ? (
+                      <Text
+                        className={styles.confirmBtn}
+                        onClick={(e) => { e.stopPropagation(); handleFillPickup(record.id); }}
+                      >
+                        填写领取方式
+                      </Text>
+                    ) : (
+                      <Text className={classnames(styles.recordStatus, record.status === 'completed' ? styles.completed : styles.pending)}>
+                        {record.status === 'completed' ? '已完成' : '待领取'}
+                      </Text>
+                    )}
                   </View>
                 </View>
               ))}
             </View>
           )}
+        </View>
+      )}
+
+      {showConfirmModal && (
+        <View className={styles.modalOverlay} onClick={() => setShowConfirmModal(false)}>
+          <View className={styles.modalContent} onClick={(e) => e.stopPropagation()}>
+            <Text className={styles.modalTitle}>选择领取方式</Text>
+
+            <View className={styles.methodTabs}>
+              <View
+                className={classnames(styles.methodTab, pickupMethod === 'delivery' && styles.active)}
+                onClick={() => setPickupMethod('delivery')}
+              >
+                📦 邮寄到家
+              </View>
+              <View
+                className={classnames(styles.methodTab, pickupMethod === 'selfpickup' && styles.active)}
+                onClick={() => setPickupMethod('selfpickup')}
+              >
+                🏪 门店自取
+              </View>
+            </View>
+
+            {pickupMethod === 'delivery' ? (
+              <View className={styles.formItem}>
+                <Text className={styles.formLabel}>收件地址</Text>
+                <input
+                  className={styles.formInput}
+                  placeholder="请输入收件地址和联系人电话"
+                  value={newAddress}
+                  onChange={(e) => setNewAddress(e.target.value)}
+                />
+              </View>
+            ) : (
+              <View className={styles.formItem}>
+                <Text className={styles.formLabel}>选择门店</Text>
+                <View className={styles.storeList}>
+                  {storeOptions.map((store, idx) => (
+                    <View
+                      key={idx}
+                      className={classnames(styles.storeOption, newStore === store && styles.selected)}
+                      onClick={() => setNewStore(store)}
+                    >
+                      {store}
+                    </View>
+                  ))}
+                </View>
+              </View>
+            )}
+
+            <View className={styles.modalButtons}>
+              <Button className={styles.cancelBtn} onClick={() => setShowConfirmModal(false)}>取消</Button>
+              <Button className={styles.confirmBtnModal} onClick={handleConfirmPickup}>确认领取</Button>
+            </View>
+          </View>
         </View>
       )}
     </ScrollView>

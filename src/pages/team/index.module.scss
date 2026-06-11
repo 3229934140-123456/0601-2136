@@ -324,3 +324,178 @@
     opacity: 0.9;
   }
 }
+
+.setGoalBtn {
+  font-size: $font-size-sm;
+  color: $color-primary;
+  padding: $spacing-xs $spacing-sm;
+  background: rgba(255, 107, 53, 0.1);
+  border-radius: $radius-sm;
+}
+
+.goalCard {
+  background: $color-bg-card;
+  border-radius: $radius-md;
+  padding: $spacing-lg;
+  background: linear-gradient(135deg, rgba(255, 107, 53, 0.05), rgba(255, 107, 53, 0.02));
+  border: 2rpx solid rgba(255, 107, 53, 0.2);
+}
+
+.goalHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: $spacing-md;
+}
+
+.goalTitle {
+  font-size: $font-size-md;
+  font-weight: $font-weight-semibold;
+  color: $color-text-primary;
+}
+
+.goalPercent {
+  font-size: $font-size-lg;
+  font-weight: $font-weight-bold;
+  color: $color-primary;
+}
+
+.goalBar {
+  height: 24rpx;
+  background: rgba(0, 0, 0, 0.06);
+  border-radius: $radius-round;
+  overflow: hidden;
+  margin-bottom: $spacing-md;
+}
+
+.goalFill {
+  height: 100%;
+  background: linear-gradient(90deg, $color-primary 0%, $color-primary-light 100%);
+  border-radius: $radius-round;
+  transition: width 0.5s ease;
+}
+
+.goalInfo {
+  display: flex;
+  justify-content: space-between;
+  font-size: $font-size-sm;
+  color: $color-text-secondary;
+}
+
+.goalProgress {
+  color: $color-primary;
+}
+
+.goalRemaining {
+  color: $color-text-secondary;
+}
+
+.noGoalCard {
+  background: $color-bg-card;
+  border-radius: $radius-md;
+  padding: $spacing-xl;
+  text-align: center;
+}
+
+.noGoalText {
+  display: block;
+  font-size: $font-size-md;
+  color: $color-text-secondary;
+  margin-top: $spacing-sm;
+}
+
+.contributionPill {
+  font-size: $font-size-xs;
+  color: $color-primary;
+  padding: 4rpx 12rpx;
+  background: rgba(255, 107, 53, 0.1);
+  border-radius: $radius-round;
+}
+
+.modalOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.modalContent {
+  width: 600rpx;
+  background: $color-bg-card;
+  border-radius: $radius-lg;
+  padding: $spacing-lg;
+  box-shadow: 0 20rpx 60rpx rgba(0, 0, 0, 0.3);
+}
+
+.modalTitle {
+  font-size: $font-size-lg;
+  font-weight: $font-weight-semibold;
+  color: $color-text-primary;
+  margin-bottom: $spacing-sm;
+  text-align: center;
+  display: block;
+}
+
+.modalSubtitle {
+  display: block;
+  font-size: $font-size-sm;
+  color: $color-text-secondary;
+  text-align: center;
+  margin-bottom: $spacing-lg;
+}
+
+.goalOptions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: $spacing-md;
+  margin-bottom: $spacing-lg;
+}
+
+.goalOption {
+  width: calc(33.33% - #{$spacing-md} * 2 / 3);
+  padding: $spacing-md;
+  text-align: center;
+  font-size: $font-size-md;
+  color: $color-text-secondary;
+  background: $color-bg-page;
+  border: 2rpx solid $color-divider;
+  border-radius: $radius-md;
+  transition: all 0.2s ease;
+
+  &.selected {
+    color: $color-primary;
+    background: rgba(255, 107, 53, 0.08);
+    border-color: $color-primary;
+  }
+}
+
+.modalButtons {
+  display: flex;
+  gap: $spacing-md;
+}
+
+.cancelBtn {
+  flex: 1;
+  height: 80rpx;
+  font-size: $font-size-md;
+  color: $color-text-secondary;
+  background: $color-bg-page;
+  border: 2rpx solid $color-divider;
+  border-radius: $radius-md;
+}
+
+.confirmBtnModal {
+  flex: 1;
+  height: 80rpx;
+  font-size: $font-size-md;
+  color: $color-text-white;
+  background: linear-gradient(135deg, $color-primary 0%, $color-primary-light 100%);
+  border: none;
+  border-radius: $radius-md;
+}

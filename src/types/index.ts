@@ -17,6 +17,22 @@ export interface Activity {
   rewardImage?: string;
 }
 
+export interface ExchangeRecord {
+  id: string;
+  userId: string;
+  rewardId: string;
+  rewardName: string;
+  rewardImage: string;
+  points: number;
+  exchangeTime: string;
+  status: 'pending' | 'completed';
+  category: 'badge' | 'prize' | 'coupon';
+  pickupMethod?: 'delivery' | 'selfpickup';
+  deliveryAddress?: string;
+  pickupStore?: string;
+  confirmedAt?: string;
+}
+
 export interface CheckinRecord {
   id: string;
   userId: string;
@@ -34,6 +50,8 @@ export interface CheckinRecord {
   comment?: string;
   likes: number;
   isLiked: boolean;
+  isReported?: boolean;
+  reportReason?: string;
 }
 
 export interface RankingItem {
@@ -59,6 +77,9 @@ export interface Team {
   rank: number;
   leaderId: string;
   leaderName: string;
+  weeklyGoal?: number;
+  weeklyProgress?: number;
+  weeklyStartDate?: string;
 }
 
 export interface TeamMember {
@@ -120,4 +141,15 @@ export interface SponsorMaterial {
   unit: string;
   sponsor: string;
   status: 'available' | 'distributed' | 'reserved';
+}
+
+export interface ActivitySummary {
+  activityId: string;
+  activityTitle: string;
+  signupCount: number;
+  checkinCount: number;
+  finishCount: number;
+  rewardClaimedCount: number;
+  totalDistance: number;
+  reportedCheckins: { id: string; userName: string; distance: number; reason: string }[];
 }

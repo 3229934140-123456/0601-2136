@@ -235,3 +235,197 @@
   font-weight: $font-weight-semibold;
   color: $color-primary;
 }
+
+.adminTabs {
+  display: flex;
+  background: $color-bg-card;
+  border-radius: $radius-md;
+  padding: $spacing-xs;
+  margin: 0 $page-padding $spacing-md;
+}
+
+.adminTabItem {
+  flex: 1;
+  padding: $spacing-md;
+  text-align: center;
+  font-size: $font-size-md;
+  color: $color-text-secondary;
+  border-radius: $radius-sm;
+  transition: all 0.2s ease;
+
+  &.active {
+    background: linear-gradient(135deg, $color-primary 0%, $color-primary-light 100%);
+    color: $color-text-white;
+    font-weight: $font-weight-semibold;
+  }
+}
+
+.filterRow {
+  display: flex;
+  align-items: flex-start;
+  gap: $spacing-md;
+  margin-bottom: $spacing-lg;
+  flex-wrap: wrap;
+}
+
+.filterLabel {
+  font-size: $font-size-md;
+  color: $color-text-secondary;
+  line-height: 56rpx;
+}
+
+.filterOptions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: $spacing-sm;
+  flex: 1;
+}
+
+.filterOption {
+  padding: $spacing-xs $spacing-md;
+  font-size: $font-size-sm;
+  color: $color-text-secondary;
+  background: $color-bg-page;
+  border: 2rpx solid $color-divider;
+  border-radius: $radius-round;
+  transition: all 0.2s ease;
+
+  &.active {
+    color: $color-primary;
+    background: rgba(255, 107, 53, 0.08);
+    border-color: $color-primary;
+  }
+}
+
+.summaryList {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-md;
+}
+
+.summaryCard {
+  background: $color-bg-card;
+  border-radius: $radius-md;
+  padding: $spacing-lg;
+  box-shadow: $shadow-card;
+}
+
+.summaryTitle {
+  font-size: $font-size-lg;
+  font-weight: $font-weight-semibold;
+  color: $color-text-primary;
+  margin-bottom: $spacing-md;
+  display: block;
+}
+
+.summaryStats {
+  display: flex;
+  gap: $spacing-md;
+  margin-bottom: $spacing-md;
+}
+
+.summaryStatItem {
+  flex: 1;
+  text-align: center;
+  padding: $spacing-sm;
+  background: $color-bg-page;
+  border-radius: $radius-sm;
+}
+
+.summaryStatValue {
+  font-size: $font-size-xl;
+  font-weight: $font-weight-bold;
+  display: block;
+  margin-bottom: 4rpx;
+}
+
+.summaryStatLabel {
+  font-size: $font-size-xs;
+  color: $color-text-secondary;
+}
+
+.summaryFooter {
+  display: flex;
+  justify-content: space-between;
+  padding-top: $spacing-sm;
+  border-top: 1rpx solid $color-divider;
+}
+
+.summaryTotal {
+  font-size: $font-size-sm;
+  color: $color-text-secondary;
+}
+
+.summaryRate {
+  font-size: $font-size-sm;
+  color: $color-primary;
+  font-weight: $font-weight-medium;
+}
+
+.reportList {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-md;
+}
+
+.reportItem {
+  background: $color-bg-card;
+  border-radius: $radius-md;
+  padding: $spacing-lg;
+  box-shadow: $shadow-card;
+  border-left: 6rpx solid #f53f3f;
+}
+
+.reportHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: $spacing-sm;
+}
+
+.reportUser {
+  font-size: $font-size-md;
+  font-weight: $font-weight-semibold;
+  color: $color-text-primary;
+}
+
+.reportDistance {
+  font-size: $font-size-md;
+  font-weight: $font-weight-semibold;
+  color: #f53f3f;
+}
+
+.reportReason {
+  font-size: $font-size-sm;
+  color: $color-text-secondary;
+  margin-bottom: $spacing-md;
+  display: block;
+  padding: $spacing-sm;
+  background: #fff7e6;
+  border-radius: $radius-sm;
+}
+
+.reportActions {
+  display: flex;
+  gap: $spacing-md;
+}
+
+.approveBtn {
+  flex: 1;
+  height: 72rpx;
+  font-size: $font-size-sm;
+  color: $color-text-white;
+  background: #00b42a;
+  border: none;
+  border-radius: $radius-sm;
+}
+
+.rejectBtn {
+  flex: 1;
+  height: 72rpx;
+  font-size: $font-size-sm;
+  color: $color-text-white;
+  background: #f53f3f;
+  border: none;
+  border-radius: $radius-sm;
+}

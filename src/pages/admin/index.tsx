@@ -1,10 +1,11 @@
-import React from 'react';
+import React, { useState, useMemo } from 'react';
 import { View, Text, Image, ScrollView, Button } from '@tarojs/components';
 import Taro from '@tarojs/taro';
 import classnames from 'classnames';
 import styles from './index.module.scss';
 import { useAppStore } from '@/store';
-import { getStatusText } from '@/utils';
+import type { ActivitySummary } from '@/types';
+import { getStatusText, formatDistance } from '@/utils';
 
 const sponsorMaterials = [
   { id: 1, name: '运动T恤', quantity: 200, unit: '件', sponsor: '运动品牌旗舰店', icon: '👕' },
@@ -13,8 +14,33 @@ const sponsorMaterials = [
   { id: 4, name: '完赛奖牌', quantity: 100, unit: '枚', sponsor: '组委会', icon: '🏅' }
 ];
 
+const adminTabs = [
+  { key: 'main', label: '管理首页' },
+  { key: 'statistics', label: '数据统计' },
+  { key: 'report', label: '举报处理' }
+];
+
 const AdminPage: React.FC = () => {
-  const { activities, exportWinners, pushNotification } = useAppStore();
+  const { activities, exportWinners, pushNotification, getActivitySummaries, handleReportedCheckin } = useAppStore();
+  const [activeTab, setActiveTab] = useState<string>('main');
+  const [selectedActivityId, setSelectedActivityId] = useState<string>('all');
+
+  const summaries: ActivitySummary[] = useMemo(() => getActivitySummaries(), [activities]);
+
+  const allReported = useMemo(() => {
+    return summaries.flatMap(s => s.reportedCheckins);
+  }, [summaries]);
+
+  const filteredSummaries = selectedActivityId === 'all'
+    ? summaries
+    : summaries.filter(s => s.activityId === selectedActivityId);
+
+  const filteredReported = selectedActivityId === 'all'
+    ? allReported
+    : allReported.filter(r => {
+        const activity = summaries.find(s => s.reportedCheckins.some(rc => rc.id === r.id));
+        return activity?.activityId === selectedActivityId;
+      });
 
   const handleCreateActivity = () => {
     Taro.navigateTo({ url: '/pages/admin-create/index' });
@@ -62,15 +88,36 @@ const AdminPage: React.FC = () => {
   };
 
   const handleMenuClick = (key: string) => {
+    if (key === 'statistics') {
+      setActiveTab('statistics');
+      return;
+    }
+    if (key === 'report') {
+      setActiveTab('report');
+      return;
+    }
     const actions: Record<string, () => void> = {
-      statistics: () => Taro.showToast({ title: '数据统计功能开发中', icon: 'none' }),
       export: handleExport,
       materials: () => Taro.showToast({ title: '物料管理功能开发中', icon: 'none' }),
       badges: () => Taro.showToast({ title: '徽章发放功能开发中', icon: 'none' }),
-      notifications: handlePushNotif,
-      report: () => Taro.showToast({ title: '举报处理功能开发中', icon: 'none' })
+      notifications: handlePushNotif
     };
     if (actions[key]) actions[key]();
+  };
+
+  const handleReportAction = (checkinId: string, action: 'approve' | 'reject') => {
+    Taro.showModal({
+      title: action === 'reject' ? '确认驳回' : '确认通过',
+      content: action === 'reject'
+        ? '驳回后该打卡记录将被标记为无效，里程和积分将被扣除，同时影响榜单和完赛资格。'
+        : '通过后该打卡记录的举报标记将被移除。',
+      success: (res) => {
+        if (res.confirm) {
+          const result = handleReportedCheckin(checkinId, action);
+          Taro.showToast({ title: result.message, icon: result.success ? 'success' : 'none' });
+        }
+      }
+    });
   };
 
   const handleActivityClick = (id: string) => {
@@ -119,85 +166,216 @@ const AdminPage: React.FC = () => {
         <Text className={styles.headerDesc}>活动管理 · 数据统计 · 物料管理</Text>
       </View>
 
-      <View className={styles.statsRow}>
-        <View className={styles.statCard}>
-          <Text className={styles.statValue}>{activities.length}</Text>
-          <Text className={styles.statLabel}>活动总数</Text>
-        </View>
-        <View className={styles.statCard}>
-          <Text className={styles.statValue}>{ongoingCount}</Text>
-          <Text className={styles.statLabel}>进行中</Text>
-        </View>
-        <View className={styles.statCard}>
-          <Text className={styles.statValue}>{totalParticipants}</Text>
-          <Text className={styles.statLabel}>总参与人数</Text>
-        </View>
-      </View>
-
-      <View className={styles.section}>
-        <Text className={styles.sectionTitle}>管理功能</Text>
-        <View className={styles.menuGrid}>
-          {menuItems.map(item => (
-            <View
-              key={item.key}
-              className={styles.menuItem}
-              onClick={() => handleMenuClick(item.key)}
-            >
-              <View className={styles.menuIcon}>{item.icon}</View>
-              <View className={styles.menuInfo}>
-                <Text className={styles.menuTitle}>{item.title}</Text>
-                <Text className={styles.menuDesc}>{item.desc}</Text>
-              </View>
-            </View>
-          ))}
-        </View>
-      </View>
-
-      <View className={styles.section}>
-        <Text className={styles.sectionTitle}>活动管理</Text>
-        <View className={styles.activityList}>
-          {activities.slice(0, 5).map(activity => (
-            <View
-              key={activity.id}
-              className={styles.activityItem}
-              onClick={() => handleActivityClick(activity.id)}
-            >
-              <Image
-                className={styles.activityCover}
-                src={activity.coverImage}
-                mode="aspectFill"
-              />
-              <View className={styles.activityInfo}>
-                <Text className={styles.activityName}>{activity.title}</Text>
-                <Text className={styles.activityMeta}>
-                  {activity.participants}人参与 · 目标{activity.targetDistance}km
-                </Text>
-              </View>
-              <View className={classnames(styles.activityStatus, styles[activity.status])}>
-                {getStatusText(activity.status)}
-              </View>
-            </View>
-          ))}
-        </View>
-      </View>
-
-      <View className={styles.section}>
-        <Text className={styles.sectionTitle}>赞助物料</Text>
-        {sponsorMaterials.map(item => (
-          <View key={item.id} className={styles.materialItem}>
-            <View className={styles.materialIcon}>{item.icon}</View>
-            <View className={styles.materialInfo}>
-              <Text className={styles.materialName}>{item.name}</Text>
-              <Text className={styles.materialSponsor}>赞助商: {item.sponsor}</Text>
-            </View>
-            <Text className={styles.materialQty}>{item.quantity}{item.unit}</Text>
+      <View className={styles.adminTabs}>
+        {adminTabs.map(tab => (
+          <View
+            key={tab.key}
+            className={classnames(styles.adminTabItem, activeTab === tab.key && styles.active)}
+            onClick={() => setActiveTab(tab.key)}
+          >
+            {tab.label}
           </View>
         ))}
       </View>
 
-      <Button className={styles.createButton} onClick={handleCreateActivity}>
-        + 发布新活动
-      </Button>
+      {activeTab === 'main' && (
+        <>
+          <View className={styles.statsRow}>
+            <View className={styles.statCard}>
+              <Text className={styles.statValue}>{activities.length}</Text>
+              <Text className={styles.statLabel}>活动总数</Text>
+            </View>
+            <View className={styles.statCard}>
+              <Text className={styles.statValue}>{ongoingCount}</Text>
+              <Text className={styles.statLabel}>进行中</Text>
+            </View>
+            <View className={styles.statCard}>
+              <Text className={styles.statValue}>{totalParticipants}</Text>
+              <Text className={styles.statLabel}>总参与人数</Text>
+            </View>
+          </View>
+
+          <View className={styles.section}>
+            <Text className={styles.sectionTitle}>管理功能</Text>
+            <View className={styles.menuGrid}>
+              {menuItems.map(item => (
+                <View
+                  key={item.key}
+                  className={styles.menuItem}
+                  onClick={() => handleMenuClick(item.key)}
+                >
+                  <View className={styles.menuIcon}>{item.icon}</View>
+                  <View className={styles.menuInfo}>
+                    <Text className={styles.menuTitle}>{item.title}</Text>
+                    <Text className={styles.menuDesc}>{item.desc}</Text>
+                  </View>
+                </View>
+              ))}
+            </View>
+          </View>
+
+          <View className={styles.section}>
+            <Text className={styles.sectionTitle}>活动管理</Text>
+            <View className={styles.activityList}>
+              {activities.slice(0, 5).map(activity => (
+                <View
+                  key={activity.id}
+                  className={styles.activityItem}
+                  onClick={() => handleActivityClick(activity.id)}
+                >
+                  <Image
+                    className={styles.activityCover}
+                    src={activity.coverImage}
+                    mode="aspectFill"
+                  />
+                  <View className={styles.activityInfo}>
+                    <Text className={styles.activityName}>{activity.title}</Text>
+                    <Text className={styles.activityMeta}>
+                      {activity.participants}人参与 · 目标{activity.targetDistance}km
+                    </Text>
+                  </View>
+                  <View className={classnames(styles.activityStatus, styles[activity.status])}>
+                    {getStatusText(activity.status)}
+                  </View>
+                </View>
+              ))}
+            </View>
+          </View>
+
+          <View className={styles.section}>
+            <Text className={styles.sectionTitle}>赞助物料</Text>
+            {sponsorMaterials.map(item => (
+              <View key={item.id} className={styles.materialItem}>
+                <View className={styles.materialIcon}>{item.icon}</View>
+                <View className={styles.materialInfo}>
+                  <Text className={styles.materialName}>{item.name}</Text>
+                  <Text className={styles.materialSponsor}>赞助商: {item.sponsor}</Text>
+                </View>
+                <Text className={styles.materialQty}>{item.quantity}{item.unit}</Text>
+              </View>
+            ))}
+          </View>
+
+          <Button className={styles.createButton} onClick={handleCreateActivity}>
+            + 发布新活动
+          </Button>
+        </>
+      )}
+
+      {activeTab === 'statistics' && (
+        <View className={styles.section}>
+          <View className={styles.filterRow}>
+            <Text className={styles.filterLabel}>按活动筛选：</Text>
+            <View className={styles.filterOptions}>
+              <View
+                className={classnames(styles.filterOption, selectedActivityId === 'all' && styles.active)}
+                onClick={() => setSelectedActivityId('all')}
+              >
+                全部
+              </View>
+              {activities.slice(0, 6).map(a => (
+                <View
+                  key={a.id}
+                  className={classnames(styles.filterOption, selectedActivityId === a.id && styles.active)}
+                  onClick={() => setSelectedActivityId(a.id)}
+                >
+                  {a.title.length > 6 ? a.title.slice(0, 6) + '...' : a.title}
+                </View>
+              ))}
+            </View>
+          </View>
+
+          <View className={styles.summaryList}>
+            {filteredSummaries.map(summary => (
+              <View key={summary.activityId} className={styles.summaryCard}>
+                <Text className={styles.summaryTitle}>{summary.activityTitle}</Text>
+                <View className={styles.summaryStats}>
+                  <View className={styles.summaryStatItem}>
+                    <Text className={styles.summaryStatValue} style={{ color: '#165DFF' }}>{summary.signupCount}</Text>
+                    <Text className={styles.summaryStatLabel}>报名人数</Text>
+                  </View>
+                  <View className={styles.summaryStatItem}>
+                    <Text className={styles.summaryStatValue} style={{ color: '#00B42A' }}>{summary.checkinCount}</Text>
+                    <Text className={styles.summaryStatLabel}>打卡次数</Text>
+                  </View>
+                  <View className={styles.summaryStatItem}>
+                    <Text className={styles.summaryStatValue} style={{ color: '#FF7D00' }}>{summary.finishCount}</Text>
+                    <Text className={styles.summaryStatLabel}>完赛人数</Text>
+                  </View>
+                  <View className={styles.summaryStatItem}>
+                    <Text className={styles.summaryStatValue} style={{ color: '#F53F3F' }}>{summary.rewardClaimedCount}</Text>
+                    <Text className={styles.summaryStatLabel}>奖励已领</Text>
+                  </View>
+                </View>
+                <View className={styles.summaryFooter}>
+                  <Text className={styles.summaryTotal}>总里程：{formatDistance(summary.totalDistance)}</Text>
+                  {summary.signupCount > 0 && (
+                    <Text className={styles.summaryRate}>
+                      完赛率：{((summary.finishCount / summary.signupCount) * 100).toFixed(1)}%
+                    </Text>
+                  )}
+                </View>
+              </View>
+            ))}
+          </View>
+        </View>
+      )}
+
+      {activeTab === 'report' && (
+        <View className={styles.section}>
+          <View className={styles.filterRow}>
+            <Text className={styles.filterLabel}>按活动筛选：</Text>
+            <View className={styles.filterOptions}>
+              <View
+                className={classnames(styles.filterOption, selectedActivityId === 'all' && styles.active)}
+                onClick={() => setSelectedActivityId('all')}
+              >
+                全部
+              </View>
+              {activities.slice(0, 6).map(a => (
+                <View
+                  key={a.id}
+                  className={classnames(styles.filterOption, selectedActivityId === a.id && styles.active)}
+                  onClick={() => setSelectedActivityId(a.id)}
+                >
+                  {a.title.length > 6 ? a.title.slice(0, 6) + '...' : a.title}
+                </View>
+              ))}
+            </View>
+          </View>
+
+          {filteredReported.length === 0 ? (
+            <View style={{ textAlign: 'center', padding: '120rpx 0', color: '#86909c' }}>
+              <Text style={{ fontSize: '96rpx' }}>✅</Text>
+              <Text style={{ display: 'block', marginTop: '24rpx', fontSize: '32rpx' }}>
+                暂无待处理的举报
+              </Text>
+            </View>
+          ) : (
+            <View className={styles.reportList}>
+              {filteredReported.map(report => (
+                <View key={report.id} className={styles.reportItem}>
+                  <View className={styles.reportHeader}>
+                    <Text className={styles.reportUser}>{report.userName}</Text>
+                    <Text className={styles.reportDistance}>{report.distance.toFixed(1)} km</Text>
+                  </View>
+                  <Text className={styles.reportReason}>
+                    举报原因：{report.reason || '异常打卡，疑似作弊'}
+                  </Text>
+                  <View className={styles.reportActions}>
+                    <Button className={styles.approveBtn} onClick={() => handleReportAction(report.id, 'approve')}>
+                      通过
+                    </Button>
+                    <Button className={styles.rejectBtn} onClick={() => handleReportAction(report.id, 'reject')}>
+                      驳回
+                    </Button>
+                  </View>
+                </View>
+              ))}
+            </View>
+          )}
+        </View>
+      )}
     </ScrollView>
   );
 };

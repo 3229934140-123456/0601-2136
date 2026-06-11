@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import Taro from '@tarojs/taro';
-import type { Activity, CheckinRecord, Team, TeamMember, Reward, Badge, UserInfo } from '@/types';
+import type { Activity, CheckinRecord, Team, TeamMember, Reward, Badge, UserInfo, ActivitySummary } from '@/types';
 import { activities as initialActivities } from '@/data/activities';
 import { checkinRecords as initialCheckins } from '@/data/checkins';
 import { teams as initialTeams } from '@/data/teams';
@@ -10,6 +10,7 @@ import { weeklyRankings } from '@/data/rankings';
 
 export interface ExchangeRecord {
   id: string;
+  userId: string;
   rewardId: string;
   rewardName: string;
   rewardImage: string;
@@ -17,6 +18,10 @@ export interface ExchangeRecord {
   exchangeTime: string;
   status: 'pending' | 'completed';
   category: 'badge' | 'prize' | 'coupon';
+  pickupMethod?: 'delivery' | 'selfpickup';
+  deliveryAddress?: string;
+  pickupStore?: string;
+  confirmedAt?: string;
 }
 
 export interface Notification {
@@ -72,6 +77,10 @@ interface AppState {
   exportWinners: (activityId: string) => string;
   signupActivity: (activityId: string) => { success: boolean; message: string };
   validateAndFixData: () => void;
+  confirmExchange: (recordId: string, pickupMethod: 'delivery' | 'selfpickup', address?: string, store?: string) => { success: boolean; message: string };
+  setTeamWeeklyGoal: (teamId: string, goal: number) => { success: boolean; message: string };
+  getActivitySummaries: () => ActivitySummary[];
+  handleReportedCheckin: (checkinId: string, action: 'approve' | 'reject') => { success: boolean; message: string };
 }
 
 const STORAGE_KEY = 'sport_community_store_v1';
@@ -277,6 +286,9 @@ export const useAppStore = create<AppState>((set, get) => ({
           return {
             ...t,
             totalDistance: Number((t.totalDistance + distance).toFixed(1)),
+            weeklyProgress: t.weeklyGoal
+              ? Number((Number((t.weeklyProgress || 0).toFixed(1)) + distance).toFixed(1))
+              : t.weeklyProgress,
             members: t.members.map(m => m.id === state.user.id
               ? { ...m, totalDistance: Number((m.totalDistance + distance).toFixed(1)) }
               : m
@@ -492,14 +504,19 @@ export const useAppStore = create<AppState>((set, get) => ({
 
     const record: ExchangeRecord = {
       id: genId('exc'),
+      userId: user.id,
       rewardId,
       rewardName: reward.name,
       rewardImage: reward.image,
       points: reward.points,
       exchangeTime: now(),
-      status: 'completed',
+      status: reward.category === 'prize' ? 'pending' : 'completed',
       category: reward.category
     };
+
+    const successMsg = reward.category === 'prize'
+      ? '兑换成功！请填写领取方式后确认'
+      : '兑换成功！';
 
     set(state => {
       const next = {
@@ -516,11 +533,13 @@ export const useAppStore = create<AppState>((set, get) => ({
 
     pn({
       title: '兑换成功',
-      content: `您已成功兑换"${reward.name}"，消耗${reward.points}积分，可在兑换记录中查看。`,
+      content: reward.category === 'prize'
+        ? `您已成功兑换"${reward.name}"，消耗${reward.points}积分，请填写领取方式后确认领取。`
+        : `您已成功兑换"${reward.name}"，消耗${reward.points}积分，可在兑换记录中查看。`,
       type: 'reward'
     });
 
-    return { success: true, message: '兑换成功！' };
+    return { success: true, message: successMsg };
   },
 
   pushNotification: (notification) => {
@@ -628,13 +647,13 @@ export const useAppStore = create<AppState>((set, get) => ({
   },
 
   claimActivityReward: (activityId) => {
-    const { activities, checkins, user, rewards, claimedActivityRewards, exchangeRecords, pushNotification: pn } = get();
+    const { activities, checkins, user, rewards, claimedActivityRewards, userSignedUpActivities, pushNotification: pn } = get();
     const activity = activities.find(a => a.id === activityId);
     if (!activity) return { success: false, message: '活动不存在' };
     if (!userSignedUpActivities.includes(activityId)) return { success: false, message: '您未报名该活动' };
     if (claimedActivityRewards.includes(activityId)) return { success: false, message: '您已领取过该活动奖励' };
 
-    const mine = checkins.filter(c => c.activityId === activityId && c.userId === user.id);
+    const mine = checkins.filter(c => c.activityId === activityId && c.userId === user.id && c.status !== 'rejected');
     const myDistance = mine.reduce((sum, c) => sum + c.distance, 0);
     if (myDistance < activity.targetDistance) {
       return { success: false, message: `还需完成 ${(activity.targetDistance - myDistance).toFixed(1)}km 才能领取奖励` };
@@ -646,12 +665,13 @@ export const useAppStore = create<AppState>((set, get) => ({
       if (reward && reward.stock > 0) {
         rewardRecord = {
           id: genId('exc'),
+          userId: user.id,
           rewardId: reward.id,
           rewardName: reward.name,
           rewardImage: reward.image,
           points: 0,
           exchangeTime: now(),
-          status: 'completed',
+          status: reward.category === 'prize' ? 'pending' : 'completed',
           category: reward.category
         };
       }
@@ -687,5 +707,185 @@ export const useAppStore = create<AppState>((set, get) => ({
       saveState(fixed);
       return fixed;
     });
+  },
+
+  confirmExchange: (recordId, pickupMethod, address, storeName) => {
+    const { exchangeRecords, user, pushNotification: pn } = get();
+    const record = exchangeRecords.find(r => r.id === recordId);
+    if (!record) return { success: false, message: '兑换记录不存在' };
+    if (record.userId !== user.id) return { success: false, message: '无法确认他人的兑换记录' };
+    if (record.status === 'completed') return { success: false, message: '该记录已完成领取' };
+
+    set(state => {
+      const next = {
+        ...state,
+        exchangeRecords: state.exchangeRecords.map(r =>
+          r.id === recordId ? {
+            ...r,
+            status: 'completed',
+            pickupMethod,
+            deliveryAddress: pickupMethod === 'delivery' ? address : undefined,
+            pickupStore: pickupMethod === 'selfpickup' ? storeName : undefined,
+            confirmedAt: now()
+          } : r
+        )
+      };
+      saveState(next);
+      return next;
+    });
+
+    pn({
+      title: '领取确认成功',
+      content: pickupMethod === 'delivery'
+        ? `您已确认邮寄"${record.rewardName}"，地址：${address}`
+        : `您已确认门店自取"${record.rewardName}"，门店：${storeName}`,
+      type: 'reward'
+    });
+
+    return { success: true, message: '领取确认成功！' };
+  },
+
+  setTeamWeeklyGoal: (teamId, goal) => {
+    const { teams, user, pushNotification: pn } = get();
+    const team = teams.find(t => t.id === teamId);
+    if (!team) return { success: false, message: '队伍不存在' };
+    if (team.leaderId !== user.id) return { success: false, message: '只有队长可以设置目标' };
+    if (goal <= 0) return { success: false, message: '目标必须大于0' };
+
+    const monday = new Date();
+    const day = monday.getDay();
+    const diff = monday.getDate() - day + (day === 0 ? -6 : 1);
+    monday.setDate(diff);
+    monday.setHours(0, 0, 0, 0);
+
+    set(state => {
+      const next = {
+        ...state,
+        teams: state.teams.map(t =>
+          t.id === teamId ? {
+            ...t,
+            weeklyGoal: goal,
+            weeklyProgress: 0,
+            weeklyStartDate: monday.toISOString()
+          } : t
+        )
+      };
+      saveState(next);
+      return next;
+    });
+
+    pn({
+      title: '本周目标已设置',
+      content: `队长已设置本周团队目标：${goal} km，大家一起加油！`,
+      type: 'system'
+    });
+
+    return { success: true, message: `本周目标已设置为 ${goal} km！` };
+  },
+
+  getActivitySummaries: (): ActivitySummary[] => {
+    const { activities, checkins, userSignedUpActivities, claimedActivityRewards, user } = get();
+
+    const summaries = activities.map(activity => {
+      const activityCheckins = checkins.filter(c => c.activityId === activity.id && c.status !== 'rejected');
+      const signups = userSignedUpActivities.filter(id => id === activity.id).length;
+      const totalDistance = activityCheckins.reduce((sum, c) => sum + c.distance, 0);
+
+      const userDistances = new Map<string, number>();
+      activityCheckins.forEach(c => {
+        const prev = userDistances.get(c.userId) || 0;
+        userDistances.set(c.userId, prev + c.distance);
+      });
+
+      const finishCount = Array.from(userDistances.values())
+        .filter(d => d >= activity.targetDistance).length;
+
+      const rewardClaimedCount = claimedActivityRewards
+        .filter(id => id === activity.id).length;
+
+      const reportedCheckins = checkins
+        .filter(c => c.activityId === activity.id && c.isReported)
+        .map(c => ({
+          id: c.id,
+          userName: c.userName,
+          distance: c.distance,
+          reason: c.reportReason || ''
+        }));
+
+      return {
+        activityId: activity.id,
+        activityTitle: activity.title,
+        signupCount: signups,
+        checkinCount: activityCheckins.length,
+        finishCount,
+        rewardClaimedCount,
+        totalDistance: Number(totalDistance.toFixed(1)),
+        reportedCheckins
+      };
+    });
+
+    return summaries;
+  },
+
+  handleReportedCheckin: (checkinId, action) => {
+    const { checkins, user, pushNotification: pn } = get();
+    if (!user.isAdmin) return { success: false, message: '只有管理员可以处理举报' };
+
+    const checkin = checkins.find(c => c.id === checkinId);
+    if (!checkin) return { success: false, message: '打卡记录不存在' };
+
+    if (action === 'reject') {
+      set(state => {
+        const next = {
+          ...state,
+          checkins: state.checkins.map(c =>
+            c.id === checkinId ? { ...c, status: 'rejected', isReported: false } : c
+          ),
+          user: state.user.id === checkin.userId
+            ? {
+                ...state.user,
+                totalDistance: Number((state.user.totalDistance - checkin.distance).toFixed(1)),
+                totalPoints: Math.max(0, state.user.totalPoints - Math.round(checkin.distance * 10)),
+                totalCheckins: Math.max(0, state.user.totalCheckins - 1)
+              }
+            : state.user,
+          teams: state.teams.map(t => {
+            const isMember = t.members.some(m => m.id === checkin.userId);
+            if (!isMember) return t;
+            return {
+              ...t,
+              totalDistance: Number((t.totalDistance - checkin.distance).toFixed(1)),
+              members: t.members.map(m => m.id === checkin.userId
+                ? { ...m, totalDistance: Number((m.totalDistance - checkin.distance).toFixed(1)) }
+                : m
+              )
+            };
+          })
+        };
+        saveState(next);
+        return next;
+      });
+
+      pn({
+        title: '举报处理结果',
+        content: `您的打卡记录（${checkin.distance} km）因"${checkin.reportReason || '异常'}"被驳回，里程已扣除`,
+        type: 'system'
+      });
+
+      return { success: true, message: '已驳回该打卡记录，里程已扣除' };
+    } else {
+      set(state => {
+        const next = {
+          ...state,
+          checkins: state.checkins.map(c =>
+            c.id === checkinId ? { ...c, isReported: false } : c
+          )
+        };
+        saveState(next);
+        return next;
+      });
+
+      return { success: true, message: '已通过该打卡记录，举报标记已移除' };
+    }
   }
 }));

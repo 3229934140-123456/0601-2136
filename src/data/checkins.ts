@@ -1,0 +1,152 @@
+import type { CheckinRecord } from '@/types';
+
+export const checkinRecords: CheckinRecord[] = [
+  {
+    id: '1',
+    userId: 'u1',
+    userName: '张小明',
+    userAvatar: 'https://picsum.photos/id/64/200/200',
+    activityId: '1',
+    activityTitle: '社区春季跑步挑战赛',
+    distance: 5.2,
+    duration: 2100,
+    pace: '6\'43"',
+    calories: 320,
+    checkinTime: '2026-06-12 07:30:00',
+    status: 'verified',
+    image: 'https://picsum.photos/id/1018/600/400',
+    comment: '今天状态不错，配速稳！',
+    likes: 23,
+    isLiked: false
+  },
+  {
+    id: '2',
+    userId: 'u2',
+    userName: '李大力',
+    userAvatar: 'https://picsum.photos/id/91/200/200',
+    activityId: '1',
+    activityTitle: '社区春季跑步挑战赛',
+    distance: 8.5,
+    duration: 3060,
+    pace: '6\'00"',
+    calories: 520,
+    checkinTime: '2026-06-12 06:15:00',
+    status: 'verified',
+    comment: '晨跑打卡，新的一天加油！',
+    likes: 45,
+    isLiked: true
+  },
+  {
+    id: '3',
+    userId: 'u3',
+    userName: '王美丽',
+    userAvatar: 'https://picsum.photos/id/177/200/200',
+    activityId: '2',
+    activityTitle: '团队接力马拉松',
+    distance: 6.0,
+    duration: 2700,
+    pace: '7\'30"',
+    calories: 360,
+    checkinTime: '2026-06-11 19:20:00',
+    status: 'verified',
+    image: 'https://picsum.photos/id/1015/600/400',
+    comment: '夜跑打卡，空气真好~',
+    likes: 18,
+    isLiked: false
+  },
+  {
+    id: '4',
+    userId: 'u4',
+    userName: '赵强',
+    userAvatar: 'https://picsum.photos/id/338/200/200',
+    activityId: '1',
+    activityTitle: '社区春季跑步挑战赛',
+    distance: 10.0,
+    duration: 3300,
+    pace: '5\'30"',
+    calories: 650,
+    checkinTime: '2026-06-11 07:00:00',
+    status: 'pending',
+    image: 'https://picsum.photos/id/1036/600/400',
+    comment: '10公里达成，等待审核中',
+    likes: 56,
+    isLiked: false
+  },
+  {
+    id: '5',
+    userId: 'u5',
+    userName: '刘芳',
+    userAvatar: 'https://picsum.photos/id/1027/200/200',
+    activityId: '5',
+    activityTitle: '月度百公里达人',
+    distance: 12.5,
+    duration: 4500,
+    pace: '6\'00"',
+    calories: 780,
+    checkinTime: '2026-06-10 06:30:00',
+    status: 'verified',
+    comment: '长距离慢跑，感觉很好！',
+    likes: 32,
+    isLiked: true
+  },
+  {
+    id: '6',
+    userId: 'u6',
+    userName: '陈军',
+    userAvatar: 'https://picsum.photos/id/1025/200/200',
+    activityId: '1',
+    activityTitle: '社区春季跑步挑战赛',
+    distance: 3.5,
+    duration: 1470,
+    pace: '7\'00"',
+    calories: 210,
+    checkinTime: '2026-06-10 18:45:00',
+    status: 'verified',
+    comment: '下班后轻松跑一跑',
+    likes: 12,
+    isLiked: false
+  },
+  {
+    id: '7',
+    userId: 'u7',
+    userName: '周婷',
+    userAvatar: 'https://picsum.photos/id/64/200/200',
+    activityId: '2',
+    activityTitle: '团队接力马拉松',
+    distance: 4.2,
+    duration: 1680,
+    pace: '6\'40"',
+    calories: 258,
+    checkinTime: '2026-06-09 20:00:00',
+    status: 'verified',
+    image: 'https://picsum.photos/id/1044/600/400',
+    comment: '为团队贡献一份力！',
+    likes: 28,
+    isLiked: false
+  },
+  {
+    id: '8',
+    userId: 'u8',
+    userName: '吴刚',
+    userAvatar: 'https://picsum.photos/id/91/200/200',
+    activityId: '5',
+    activityTitle: '月度百公里达人',
+    distance: 15.0,
+    duration: 5400,
+    pace: '6\'00"',
+    calories: 900,
+    checkinTime: '2026-06-08 05:30:00',
+    status: 'verified',
+    comment: '半马训练，持续进步中',
+    likes: 67,
+    isLiked: true
+  }
+];
+
+export const getUserCheckins = (userId: string): CheckinRecord[] => {
+  return checkinRecords.filter(item => item.userId === userId);
+};
+
+export const getActivityCheckins = (activityId: string): CheckinRecord[] => {
+  return checkinRecords.filter(item => item.activityId === activityId);
+};

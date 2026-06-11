@@ -1,0 +1,274 @@
+@use '@/styles/variables.scss' as *;
+
+.page {
+  min-height: 100vh;
+  background: $color-bg-page;
+  padding-bottom: 40rpx;
+}
+
+.header {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  padding: 64rpx $page-spacing;
+  color: $color-text-white;
+  text-align: center;
+}
+
+.headerTitle {
+  font-size: $font-size-xl;
+  font-weight: $font-weight-bold;
+  margin-bottom: 8rpx;
+}
+
+.headerSubtitle {
+  font-size: $font-size-sm;
+  opacity: 0.85;
+}
+
+.statsGrid {
+  display: flex;
+  flex-wrap: wrap;
+  padding: 0 $page-spacing;
+  margin-top: -40rpx;
+  position: relative;
+  z-index: 10;
+  gap: $spacing-md;
+}
+
+.statCard {
+  width: calc((100% - 24rpx) / 2);
+  background: $color-bg-card;
+  border-radius: $radius-lg;
+  padding: $spacing-lg;
+  text-align: center;
+  box-shadow: $shadow-card;
+}
+
+.statValue {
+  font-size: $font-size-xxl;
+  font-weight: $font-weight-bold;
+  color: $color-primary;
+  margin-bottom: 8rpx;
+}
+
+.statLabel {
+  font-size: $font-size-sm;
+  color: $color-text-tertiary;
+}
+
+.section {
+  margin: $spacing-md $page-spacing 0;
+}
+
+.sectionTitle {
+  font-size: $font-size-lg;
+  font-weight: $font-weight-semibold;
+  color: $color-text-primary;
+  margin-bottom: $spacing-md;
+}
+
+.winnersCard {
+  background: $color-bg-card;
+  border-radius: $radius-lg;
+  padding: $spacing-lg;
+  box-shadow: $shadow-card;
+}
+
+.winnerTop {
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding: $spacing-lg 0;
+  margin-bottom: $spacing-lg;
+}
+
+.winnerPodium {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex: 1;
+  
+  &.first {
+    order: 2;
+    transform: translateY(-20rpx);
+  }
+  
+  &.second {
+    order: 1;
+  }
+  
+  &.third {
+    order: 3;
+  }
+}
+
+.winnerAvatar {
+  width: 100rpx;
+  height: 100rpx;
+  border-radius: $radius-round;
+  margin-bottom: $spacing-sm;
+  border: 4rpx solid $color-gold;
+  
+  .second & {
+    border-color: $color-silver;
+    width: 80rpx;
+    height: 80rpx;
+  }
+  
+  .third & {
+    border-color: $color-bronze;
+    width: 80rpx;
+    height: 80rpx;
+  }
+  
+  .first & {
+    width: 120rpx;
+    height: 120rpx;
+  }
+}
+
+.winnerName {
+  font-size: $font-size-sm;
+  font-weight: $font-weight-medium;
+  color: $color-text-primary;
+  margin-bottom: 4rpx;
+  @include text-ellipsis;
+  max-width: 140rpx;
+}
+
+.winnerDistance {
+  font-size: $font-size-xs;
+  color: $color-primary;
+  font-weight: $font-weight-semibold;
+}
+
+.winnerRank {
+  font-size: 32rpx;
+  margin-top: 8rpx;
+}
+
+.winnersList {
+  border-top: 1rpx solid $color-divider;
+  padding-top: $spacing-md;
+}
+
+.winnerItem {
+  display: flex;
+  align-items: center;
+  padding: $spacing-sm 0;
+}
+
+.winnerRankNum {
+  width: 48rpx;
+  font-size: $font-size-md;
+  font-weight: $font-weight-semibold;
+  color: $color-text-tertiary;
+}
+
+.winnerItemAvatar {
+  width: 64rpx;
+  height: 64rpx;
+  border-radius: $radius-round;
+  margin-right: $spacing-md;
+}
+
+.winnerItemInfo {
+  flex: 1;
+}
+
+.winnerItemName {
+  font-size: $font-size-md;
+  color: $color-text-primary;
+  margin-bottom: 2rpx;
+}
+
+.winnerItemTeam {
+  font-size: $font-size-xs;
+  color: $color-text-tertiary;
+}
+
+.winnerItemDistance {
+  font-size: $font-size-md;
+  font-weight: $font-weight-semibold;
+  color: $color-primary;
+}
+
+.chartSection {
+  background: $color-bg-card;
+  border-radius: $radius-lg;
+  padding: $spacing-lg;
+  box-shadow: $shadow-card;
+}
+
+.chartTitle {
+  font-size: $font-size-md;
+  font-weight: $font-weight-medium;
+  color: $color-text-primary;
+  margin-bottom: $spacing-lg;
+}
+
+.chartBars {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  height: 240rpx;
+  padding: 0 $spacing-sm;
+}
+
+.chartBarWrapper {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  height: 100%;
+  justify-content: flex-end;
+}
+
+.chartBar {
+  width: 32rpx;
+  background: linear-gradient(180deg, $color-primary 0%, $color-primary-light 100%);
+  border-radius: $radius-sm $radius-sm 0 0;
+  margin-bottom: $spacing-sm;
+  transition: height $transition-base;
+}
+
+.chartLabel {
+  font-size: $font-size-xs;
+  color: $color-text-tertiary;
+}
+
+.highlights {
+  display: flex;
+  flex-wrap: wrap;
+  gap: $spacing-md;
+}
+
+.highlightItem {
+  width: calc((100% - 24rpx) / 2);
+  background: $color-bg-card;
+  border-radius: $radius-lg;
+  padding: $spacing-lg;
+  box-shadow: $shadow-card;
+  display: flex;
+  align-items: center;
+}
+
+.highlightIcon {
+  font-size: 48rpx;
+  margin-right: $spacing-md;
+}
+
+.highlightInfo {
+  flex: 1;
+}
+
+.highlightValue {
+  font-size: $font-size-lg;
+  font-weight: $font-weight-bold;
+  color: $color-text-primary;
+  margin-bottom: 4rpx;
+}
+
+.highlightLabel {
+  font-size: $font-size-xs;
+  color: $color-text-tertiary;
+}

@@ -1,0 +1,281 @@
+@use '@/styles/variables.scss' as *;
+
+.page {
+  min-height: 100vh;
+  background: $color-bg-page;
+  padding-bottom: 40rpx;
+}
+
+.header {
+  background: linear-gradient(135deg, $color-primary 0%, $color-primary-light 100%);
+  padding: 64rpx $page-spacing $spacing-xl;
+  color: $color-text-white;
+  border-radius: 0 0 32rpx 32rpx;
+}
+
+.userInfo {
+  display: flex;
+  align-items: center;
+  margin-bottom: $spacing-xl;
+}
+
+.avatar {
+  width: 140rpx;
+  height: 140rpx;
+  border-radius: $radius-round;
+  border: 6rpx solid rgba(255, 255, 255, 0.3);
+  margin-right: $spacing-lg;
+}
+
+.userDetail {
+  flex: 1;
+}
+
+.userName {
+  font-size: $font-size-xxl;
+  font-weight: $font-weight-bold;
+  margin-bottom: 8rpx;
+}
+
+.levelInfo {
+  display: inline-flex;
+  align-items: center;
+  background: rgba(255, 255, 255, 0.2);
+  padding: 6rpx 20rpx;
+  border-radius: $radius-round;
+  font-size: $font-size-sm;
+}
+
+.levelIcon {
+  margin-right: 8rpx;
+}
+
+.pointsInfo {
+  display: flex;
+  align-items: center;
+  background: rgba(255, 255, 255, 0.2);
+  padding: 8rpx 20rpx;
+  border-radius: $radius-round;
+  font-size: $font-size-md;
+  font-weight: $font-weight-medium;
+}
+
+.pointsIcon {
+  margin-right: 8rpx;
+}
+
+.statsRow {
+  display: flex;
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: $radius-lg;
+  padding: $spacing-md 0;
+}
+
+.statItem {
+  flex: 1;
+  text-align: center;
+}
+
+.statValue {
+  font-size: $font-size-xxl;
+  font-weight: $font-weight-bold;
+  margin-bottom: 4rpx;
+}
+
+.statLabel {
+  font-size: $font-size-sm;
+  opacity: 0.85;
+}
+
+.statDivider {
+  width: 1rpx;
+  background: rgba(255, 255, 255, 0.3);
+  margin: $spacing-sm 0;
+}
+
+.section {
+  margin: $spacing-md $page-spacing 0;
+}
+
+.sectionTitle {
+  font-size: $font-size-lg;
+  font-weight: $font-weight-semibold;
+  color: $color-text-primary;
+  margin-bottom: $spacing-md;
+}
+
+.badgeSection {
+  background: $color-bg-card;
+  border-radius: $radius-lg;
+  padding: $spacing-lg;
+  box-shadow: $shadow-card;
+}
+
+.badgeHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: $spacing-lg;
+}
+
+.badgeCount {
+  font-size: $font-size-sm;
+  color: $color-text-tertiary;
+}
+
+.badgeGrid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: $spacing-md;
+}
+
+.badgeItem {
+  width: calc((100% - 48rpx) / 4);
+  text-align: center;
+  
+  &.locked {
+    opacity: 0.4;
+  }
+}
+
+.badgeIcon {
+  width: 80rpx;
+  height: 80rpx;
+  margin: 0 auto $spacing-sm;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 48rpx;
+  border-radius: $radius-round;
+  background: linear-gradient(135deg, #fff5f0 0%, #ffe8d9 100%);
+  
+  &.gold {
+    background: linear-gradient(135deg, #fff8dc 0%, #ffd700 100%);
+  }
+  
+  &.silver {
+    background: linear-gradient(135deg, #f5f5f5 0%, #c0c0c0 100%);
+  }
+  
+  &.bronze {
+    background: linear-gradient(135deg, #f5e6d3 0%, #cd7f32 100%);
+  }
+  
+  &.diamond {
+    background: linear-gradient(135deg, #e0f7ff 0%, #b9f2ff 100%);
+  }
+}
+
+.badgeName {
+  font-size: $font-size-xs;
+  color: $color-text-secondary;
+  @include text-ellipsis;
+}
+
+.menuGroup {
+  background: $color-bg-card;
+  border-radius: $radius-lg;
+  overflow: hidden;
+  box-shadow: $shadow-card;
+}
+
+.menuItem {
+  display: flex;
+  align-items: center;
+  padding: $spacing-md $spacing-lg;
+  
+  &:not(:last-child) {
+    border-bottom: 1rpx solid $color-divider;
+  }
+  
+  &:active {
+    background: $color-bg-hover;
+  }
+}
+
+.menuIcon {
+  width: 56rpx;
+  height: 56rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 36rpx;
+  margin-right: $spacing-md;
+  background: $color-bg-page;
+  border-radius: $radius-md;
+}
+
+.menuContent {
+  flex: 1;
+}
+
+.menuTitle {
+  font-size: $font-size-md;
+  color: $color-text-primary;
+}
+
+.menuDesc {
+  font-size: $font-size-xs;
+  color: $color-text-tertiary;
+  margin-top: 4rpx;
+}
+
+.menuArrow {
+  font-size: 28rpx;
+  color: $color-text-tertiary;
+}
+
+.adminEntry {
+  margin: $spacing-lg $page-spacing 0;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: $radius-lg;
+  padding: $spacing-lg;
+  color: $color-text-white;
+  display: flex;
+  align-items: center;
+  box-shadow: 0 4rpx 16rpx rgba(102, 126, 234, 0.3);
+  
+  &:active {
+    opacity: 0.9;
+  }
+}
+
+.adminIcon {
+  font-size: 48rpx;
+  margin-right: $spacing-md;
+}
+
+.adminInfo {
+  flex: 1;
+}
+
+.adminTitle {
+  font-size: $font-size-md;
+  font-weight: $font-weight-semibold;
+  margin-bottom: 4rpx;
+}
+
+.adminDesc {
+  font-size: $font-size-xs;
+  opacity: 0.85;
+}
+
+.adminArrow {
+  font-size: 32rpx;
+  opacity: 0.8;
+}
+
+.rewardEntry {
+  margin: $spacing-md $page-spacing 0;
+  background: linear-gradient(135deg, #ffd700 0%, #ffb800 100%);
+  border-radius: $radius-lg;
+  padding: $spacing-lg;
+  color: $color-text-primary;
+  display: flex;
+  align-items: center;
+  box-shadow: 0 4rpx 16rpx rgba(255, 215, 0, 0.3);
+  
+  &:active {
+    opacity: 0.9;
+  }
+}

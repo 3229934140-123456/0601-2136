@@ -1,0 +1,293 @@
+@use '@/styles/variables.scss' as *;
+
+.page {
+  min-height: 100vh;
+  background: $color-bg-page;
+  padding-bottom: 160rpx;
+}
+
+.myTeamCard {
+  margin: $page-spacing;
+  background: linear-gradient(135deg, $color-primary 0%, $color-primary-light 100%);
+  border-radius: $radius-xl;
+  padding: $spacing-xl;
+  color: $color-text-white;
+  box-shadow: 0 8rpx 32rpx rgba(255, 107, 53, 0.3);
+}
+
+.teamHeader {
+  display: flex;
+  align-items: center;
+  margin-bottom: $spacing-lg;
+}
+
+.teamAvatar {
+  width: 100rpx;
+  height: 100rpx;
+  border-radius: $radius-lg;
+  margin-right: $spacing-md;
+  border: 3rpx solid rgba(255, 255, 255, 0.3);
+}
+
+.teamInfo {
+  flex: 1;
+}
+
+.teamName {
+  font-size: $font-size-xl;
+  font-weight: $font-weight-bold;
+  margin-bottom: 8rpx;
+}
+
+.teamSlogan {
+  font-size: $font-size-sm;
+  opacity: 0.9;
+  @include text-ellipsis;
+}
+
+.teamRank {
+  background: rgba(255, 255, 255, 0.2);
+  padding: 8rpx 20rpx;
+  border-radius: $radius-round;
+  font-size: $font-size-sm;
+  font-weight: $font-weight-medium;
+}
+
+.teamStats {
+  display: flex;
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: $radius-lg;
+  padding: $spacing-md 0;
+  margin-bottom: $spacing-lg;
+}
+
+.teamStatItem {
+  flex: 1;
+  text-align: center;
+}
+
+.teamStatValue {
+  font-size: $font-size-xl;
+  font-weight: $font-weight-bold;
+  margin-bottom: 4rpx;
+}
+
+.teamStatLabel {
+  font-size: $font-size-xs;
+  opacity: 0.85;
+}
+
+.teamActions {
+  display: flex;
+  gap: $spacing-md;
+}
+
+.actionButton {
+  @include button-reset;
+  flex: 1;
+  height: $button-height-md;
+  border-radius: $radius-button;
+  font-size: $font-size-md;
+  font-weight: $font-weight-medium;
+  background: rgba(255, 255, 255, 0.2);
+  color: $color-text-white;
+  transition: all $transition-fast;
+  
+  &:active {
+    opacity: 0.8;
+  }
+  
+  &.primary {
+    background: $color-text-white;
+    color: $color-primary;
+  }
+}
+
+.section {
+  margin: 0 $page-spacing $spacing-md;
+}
+
+.sectionHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: $spacing-md;
+}
+
+.sectionTitle {
+  font-size: $font-size-lg;
+  font-weight: $font-weight-semibold;
+  color: $color-text-primary;
+}
+
+.sectionMore {
+  font-size: $font-size-sm;
+  color: $color-text-tertiary;
+}
+
+.membersList {
+  background: $color-bg-card;
+  border-radius: $radius-lg;
+  padding: $spacing-sm 0;
+  box-shadow: $shadow-card;
+}
+
+.memberItem {
+  display: flex;
+  align-items: center;
+  padding: $spacing-md $spacing-lg;
+  
+  &:not(:last-child) {
+    border-bottom: 1rpx solid $color-divider;
+  }
+}
+
+.memberAvatar {
+  width: 80rpx;
+  height: 80rpx;
+  border-radius: $radius-round;
+  margin-right: $spacing-md;
+}
+
+.memberInfo {
+  flex: 1;
+}
+
+.memberName {
+  font-size: $font-size-md;
+  font-weight: $font-weight-medium;
+  color: $color-text-primary;
+  margin-bottom: 4rpx;
+  display: flex;
+  align-items: center;
+}
+
+.roleBadge {
+  margin-left: 12rpx;
+  padding: 2rpx 10rpx;
+  background: rgba(255, 107, 53, 0.1);
+  color: $color-primary;
+  font-size: $font-size-xs;
+  border-radius: $radius-xs;
+}
+
+.memberDistance {
+  font-size: $font-size-sm;
+  color: $color-text-tertiary;
+}
+
+.memberRank {
+  font-size: $font-size-sm;
+  color: $color-primary;
+  font-weight: $font-weight-medium;
+}
+
+.rankingList {
+  background: $color-bg-card;
+  border-radius: $radius-lg;
+  overflow: hidden;
+  box-shadow: $shadow-card;
+}
+
+.rankingItem {
+  display: flex;
+  align-items: center;
+  padding: $spacing-md $spacing-lg;
+  
+  &:not(:last-child) {
+    border-bottom: 1rpx solid $color-divider;
+  }
+}
+
+.rankNum {
+  width: 48rpx;
+  font-size: $font-size-md;
+  font-weight: $font-weight-semibold;
+  color: $color-text-tertiary;
+  text-align: center;
+  margin-right: $spacing-sm;
+  
+  &.top1 {
+    color: $color-gold;
+  }
+  
+  &.top2 {
+    color: $color-silver;
+  }
+  
+  &.top3 {
+    color: $color-bronze;
+  }
+}
+
+.rankingAvatar {
+  width: 72rpx;
+  height: 72rpx;
+  border-radius: $radius-round;
+  margin-right: $spacing-md;
+}
+
+.rankingInfo {
+  flex: 1;
+}
+
+.rankingName {
+  font-size: $font-size-md;
+  font-weight: $font-weight-medium;
+  color: $color-text-primary;
+  margin-bottom: 4rpx;
+}
+
+.rankingMembers {
+  font-size: $font-size-xs;
+  color: $color-text-tertiary;
+}
+
+.rankingDistance {
+  font-size: $font-size-md;
+  font-weight: $font-weight-semibold;
+  color: $color-primary;
+}
+
+.bottomBar {
+  position: fixed;
+  bottom: 120rpx;
+  left: 0;
+  right: 0;
+  padding: $spacing-md $page-padding;
+  background: transparent;
+  display: flex;
+  gap: $spacing-md;
+}
+
+.createButton {
+  @include button-reset;
+  flex: 1;
+  height: $button-height-lg;
+  border-radius: $radius-button;
+  font-size: $font-size-md;
+  font-weight: $font-weight-semibold;
+  background: $color-bg-card;
+  color: $color-text-primary;
+  box-shadow: $shadow-float;
+  
+  &:active {
+    opacity: 0.9;
+  }
+}
+
+.joinButton {
+  @include button-reset;
+  flex: 1;
+  height: $button-height-lg;
+  border-radius: $radius-button;
+  font-size: $font-size-md;
+  font-weight: $font-weight-semibold;
+  background: linear-gradient(135deg, $color-primary 0%, $color-primary-light 100%);
+  color: $color-text-white;
+  box-shadow: 0 4rpx 16rpx rgba(255, 107, 53, 0.3);
+  
+  &:active {
+    opacity: 0.9;
+  }
+}

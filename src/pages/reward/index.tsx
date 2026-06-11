@@ -4,6 +4,7 @@ import Taro from '@tarojs/taro';
 import classnames from 'classnames';
 import styles from './index.module.scss';
 import { useAppStore } from '@/store';
+import type { AppState } from '@/store';
 import { badges } from '@/data/rewards';
 import type { Reward } from '@/types';
 import { formatDateTime } from '@/utils';
@@ -15,8 +16,17 @@ const tabs = [
   { key: 'record', label: '兑换记录' }
 ];
 
+const recordTabs = [
+  { key: 'all', label: '全部' },
+  { key: 'completed', label: '已完成' },
+  { key: 'pending', label: '待领取' },
+  { key: 'prize', label: '实物奖品' },
+  { key: 'coupon', label: '优惠券' },
+  { key: 'badge', label: '徽章' }
+];
+
 const RewardPage: React.FC = () => {
-  const { rewards, user, exchangeRecords, exchangeReward, clearExchangeRecords } = useAppStore();
+  const { rewards, user, exchangeRecords, exchangeFilter, exchangeReward, clearExchangeRecords, setExchangeFilter } = useAppStore();
   const [activeTab, setActiveTab] = useState<string>('prize');
 
   const filteredRewards = useMemo(() => {
@@ -62,6 +72,18 @@ const RewardPage: React.FC = () => {
       }
     });
   };
+
+  const handleRecordFilter = (key: string) => {
+    setExchangeFilter(key as AppState['exchangeFilter']);
+  };
+
+  const filteredRecords = useMemo(() => {
+    if (exchangeFilter === 'all') return exchangeRecords;
+    if (exchangeFilter === 'completed' || exchangeFilter === 'pending') {
+      return exchangeRecords.filter(r => r.status === exchangeFilter);
+    }
+    return exchangeRecords.filter(r => r.category === exchangeFilter);
+  }, [exchangeRecords, exchangeFilter]);
 
   const myBadges = badges.filter(b => b.obtainDate);
   const allBadges = badges;
@@ -149,19 +171,32 @@ const RewardPage: React.FC = () => {
         <View className={styles.section}>
           <View className={styles.sectionHeader}>
             <Text className={styles.sectionTitle} style={{ marginBottom: 0 }}>
-              兑换记录（{exchangeRecords.length}）
+              兑换记录（{filteredRecords.length}/{exchangeRecords.length}）
             </Text>
             {exchangeRecords.length > 0 && (
               <Text className={styles.clearBtn} onClick={handleClearRecords}>清空</Text>
             )}
           </View>
-          {exchangeRecords.length === 0 ? (
+
+          <View className={styles.recordTabs}>
+            {recordTabs.map(tab => (
+              <View
+                key={tab.key}
+                className={classnames(styles.recordTabItem, exchangeFilter === tab.key && styles.active)}
+                onClick={() => handleRecordFilter(tab.key)}
+              >
+                {tab.label}
+              </View>
+            ))}
+          </View>
+
+          {filteredRecords.length === 0 ? (
             <View style={{ textAlign: 'center', padding: '80rpx 0', color: '#86909c' }}>
-              暂无兑换记录
+              暂无{exchangeFilter === 'all' ? '' : recordTabs.find(t => t.key === exchangeFilter)?.label}兑换记录
             </View>
           ) : (
             <View>
-              {exchangeRecords.map(record => (
+              {filteredRecords.map(record => (
                 <View key={record.id} className={styles.recordItem}>
                   <Image className={styles.recordImg} src={record.rewardImage} mode="aspectFill" />
                   <View className={styles.recordInfo}>
@@ -170,7 +205,9 @@ const RewardPage: React.FC = () => {
                   </View>
                   <View className={styles.recordRight}>
                     <Text className={styles.recordPoints}>-{record.points}积分</Text>
-                    <Text className={styles.recordStatus}>已完成</Text>
+                    <Text className={classnames(styles.recordStatus, record.status === 'completed' ? styles.completed : styles.pending)}>
+                      {record.status === 'completed' ? '已完成' : '待领取'}
+                    </Text>
                   </View>
                 </View>
               ))}

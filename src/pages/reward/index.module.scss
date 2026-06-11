@@ -270,6 +270,43 @@
 .recordStatus {
   font-size: $font-size-xs;
   color: #00b42a;
+
+  &.completed {
+    color: #00b42a;
+  }
+
+  &.pending {
+    color: #ff7d00;
+  }
+}
+
+.recordTabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: $spacing-sm;
+  margin-bottom: $spacing-md;
+  padding: $spacing-sm;
+  background: $color-bg-card;
+  border-radius: $radius-md;
+}
+
+.recordTabItem {
+  padding: $spacing-xs $spacing-md;
+  font-size: $font-size-sm;
+  color: $color-text-secondary;
+  background: $color-bg-page;
+  border-radius: $radius-round;
+  transition: all 0.2s ease;
+
+  &.active {
+    background: linear-gradient(135deg, $color-primary 0%, $color-primary-light 100%);
+    color: $color-text-white;
+    font-weight: $font-weight-medium;
+  }
+
+  &:active {
+    transform: scale(0.95);
+  }
 }
 
 .sectionHeader {

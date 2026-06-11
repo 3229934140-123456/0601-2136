@@ -13,6 +13,8 @@ export interface Activity {
   reward: string;
   rules: string[];
   sponsor?: string;
+  relatedRewardId?: string;
+  rewardImage?: string;
 }
 
 export interface CheckinRecord {

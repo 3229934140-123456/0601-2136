@@ -12,7 +12,7 @@ export const currentUser: UserInfo = {
   badges: badges.filter(b => b.obtainDate),
   isAdmin: true,
   isTeamLeader: true,
-  teamId: 't1'
+  teamId: 't3'
 };
 
 export const getCurrentUser = (): UserInfo => {

@@ -321,3 +321,91 @@
     box-shadow: 0 4rpx 16rpx rgba(0, 180, 42, 0.3);
   }
 }
+
+.myCheckinsSection {
+  margin: 0 $page-spacing $spacing-md;
+  background: $color-bg-card;
+  border-radius: $radius-lg;
+  padding: $spacing-lg;
+  box-shadow: $shadow-card;
+}
+
+.myCheckinsList {
+  margin-top: $spacing-md;
+}
+
+.myCheckinItem {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: $spacing-md 0;
+  border-bottom: 1rpx solid $color-divider;
+
+  &:last-child {
+    border-bottom: none;
+  }
+}
+
+.myCheckinLeft {
+  .myCheckinDistance {
+    font-size: $font-size-lg;
+    font-weight: $font-weight-bold;
+    color: $color-primary;
+    display: block;
+    margin-bottom: 4rpx;
+  }
+
+  .myCheckinPace {
+    font-size: $font-size-xs;
+    color: $color-text-tertiary;
+  }
+}
+
+.myCheckinRight {
+  text-align: right;
+
+  .myCheckinTime {
+    font-size: $font-size-sm;
+    color: $color-text-secondary;
+    display: block;
+    margin-bottom: 4rpx;
+  }
+
+  .myCheckinCal {
+    font-size: $font-size-xs;
+    color: $color-text-tertiary;
+  }
+}
+
+.moreRecordsHint {
+  text-align: center;
+  font-size: $font-size-xs;
+  color: $color-text-tertiary;
+  padding: $spacing-md 0 0;
+}
+
+.claimableReward {
+  cursor: pointer;
+  background: linear-gradient(135deg, #fff8ec 0%, #fff0d9 100%);
+  border: 2rpx solid #ffb800;
+
+  &:active {
+    opacity: 0.9;
+    transform: scale(0.99);
+  }
+}
+
+.rewardThumb {
+  width: 96rpx;
+  height: 96rpx;
+  border-radius: $radius-md;
+  margin-right: $spacing-md;
+}
+
+.claimHint {
+  display: block;
+  font-size: $font-size-xs;
+  color: $color-primary;
+  margin-top: 8rpx;
+  font-weight: $font-weight-medium;
+}

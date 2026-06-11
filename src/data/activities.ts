@@ -14,6 +14,8 @@ export const activities: Activity[] = [
     maxParticipants: 500,
     status: 'ongoing',
     reward: '完赛徽章 + 运动手环',
+    relatedRewardId: 'r1',
+    rewardImage: 'https://picsum.photos/id/1/300/300',
     rules: [
       '活动期间累计跑步里程达到50公里即为完赛',
       '每天最多记录1次跑步，单次跑步不少于1公里',
@@ -35,6 +37,8 @@ export const activities: Activity[] = [
     maxParticipants: 200,
     status: 'ongoing',
     reward: '团队奖杯 + 定制T恤',
+    relatedRewardId: 'r3',
+    rewardImage: 'https://picsum.photos/id/119/300/300',
     rules: [
       '每队5-10人，共同完成42.195公里',
       '每人至少贡献1公里',
@@ -56,6 +60,8 @@ export const activities: Activity[] = [
     maxParticipants: 1000,
     status: 'upcoming',
     reward: '500积分 + 坚持徽章',
+    relatedRewardId: 'r5',
+    rewardImage: 'https://picsum.photos/id/8/300/300',
     rules: [
       '连续7天每天跑步不少于2公里',
       '中断一天挑战失败',
@@ -97,6 +103,8 @@ export const activities: Activity[] = [
     maxParticipants: 200,
     status: 'ongoing',
     reward: '百公里达人徽章 + 运动背包',
+    relatedRewardId: 'r2',
+    rewardImage: 'https://picsum.photos/id/2/300/300',
     rules: [
       '本月累计跑步里程达到100公里',
       '不限次数，累计计算',
@@ -117,6 +125,8 @@ export const activities: Activity[] = [
     maxParticipants: 150,
     status: 'ended',
     reward: '亲子奖牌 + 小礼品',
+    relatedRewardId: 'r4',
+    rewardImage: 'https://picsum.photos/id/6/300/300',
     rules: [
       '家长陪同孩子参加',
       '全程3公里趣味跑',
@@ -138,6 +148,8 @@ export const activities: Activity[] = [
     maxParticipants: 1000,
     status: 'ended',
     reward: '公益徽章 + 捐赠证书',
+    relatedRewardId: 'r6',
+    rewardImage: 'https://picsum.photos/id/3/300/300',
     rules: [
       '活动期间累计跑步里程',
       '每公里企业捐赠1元',

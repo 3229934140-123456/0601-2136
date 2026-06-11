@@ -14,8 +14,10 @@ const ActivityDetailPage: React.FC = () => {
     checkins,
     user,
     userSignedUpActivities,
+    claimedActivityRewards,
     signupActivity,
-    pushNotification
+    pushNotification,
+    claimActivityReward
   } = useAppStore();
 
   const activityId = router.params.id || '';
@@ -48,6 +50,37 @@ const ActivityDetailPage: React.FC = () => {
     const mine = activityCheckins.filter(c => c.userId === user.id);
     return mine.reduce((sum, c) => sum + c.distance, 0);
   }, [activityCheckins, user.id]);
+
+  const myCheckins = useMemo(() => {
+    return activityCheckins.filter(c => c.userId === user.id);
+  }, [activityCheckins, user.id]);
+
+  const isFinished = useMemo(() => {
+    return isSignedUp && myProgress >= (activity?.targetDistance || 0);
+  }, [isSignedUp, myProgress, activity?.targetDistance]);
+
+  const isRewardClaimed = useMemo(() => {
+    return claimedActivityRewards.includes(activityId);
+  }, [claimedActivityRewards, activityId]);
+
+  const remainingDistance = useMemo(() => {
+    if (!activity || !isSignedUp) return 0;
+    return Math.max(0, activity.targetDistance - myProgress);
+  }, [activity, isSignedUp, myProgress]);
+
+  const handleClaimReward = () => {
+    if (!activity) return;
+    Taro.showModal({
+      title: '确认领取奖励',
+      content: `确定领取"${activity.title}"的完赛奖励吗？\n\n${activity.reward}`,
+      success: (res) => {
+        if (res.confirm) {
+          const result = claimActivityReward(activity.id);
+          Taro.showToast({ title: result.message, icon: result.success ? 'success' : 'none' });
+        }
+      }
+    });
+  };
 
   const handleSignup = () => {
     if (!activity) return;
@@ -189,7 +222,66 @@ const ActivityDetailPage: React.FC = () => {
               <Text>
                 累计 <Text className={styles.progressHighlight}>{formatDistance(myProgress)}</Text> km
               </Text>
-              <Text>目标 {activity.targetDistance} km</Text>
+              <Text>
+                {remainingDistance > 0
+                  ? `还差 ${formatDistance(remainingDistance)} km 完赛`
+                  : isFinished
+                    ? <Text style={{ color: '#00b42a', fontWeight: 600 }}>🎉 已完赛</Text>
+                    : `目标 ${activity.targetDistance} km`
+                }
+              </Text>
+            </View>
+          </View>
+        )}
+
+        {isSignedUp && myCheckins.length > 0 && (
+          <View className={styles.myCheckinsSection}>
+            <Text className={styles.sectionTitle}>我的打卡记录（{myCheckins.length}）</Text>
+            <View className={styles.myCheckinsList}>
+              {myCheckins.slice(0, 5).map((checkin) => (
+                <View key={checkin.id} className={styles.myCheckinItem}>
+                  <View className={styles.myCheckinLeft}>
+                    <Text className={styles.myCheckinDistance}>{formatDistance(checkin.distance)} km</Text>
+                    <Text className={styles.myCheckinPace}>配速 {checkin.pace}</Text>
+                  </View>
+                  <View className={styles.myCheckinRight}>
+                    <Text className={styles.myCheckinTime}>{formatDate(checkin.checkinTime)}</Text>
+                    <Text className={styles.myCheckinCal}>{checkin.calories} 千卡</Text>
+                  </View>
+                </View>
+              ))}
+              {myCheckins.length > 5 && (
+                <View className={styles.moreRecordsHint}>
+                  还有 {myCheckins.length - 5} 条记录，去打卡页查看全部
+                </View>
+              )}
+            </View>
+          </View>
+        )}
+
+        {isSignedUp && activity.status === 'ended' && (
+          <View
+            className={classnames(styles.rewardSection, styles.claimableReward)}
+            onClick={isFinished && !isRewardClaimed ? handleClaimReward : undefined}
+          >
+            <View className={styles.rewardContent}>
+              {activity.rewardImage ? (
+                <Image className={styles.rewardThumb} src={activity.rewardImage} mode="aspectFill" />
+              ) : (
+                <Text className={styles.rewardIcon}>🎁</Text>
+              )}
+              <View className={styles.rewardText}>
+                <Text className={styles.rewardTitle}>
+                  {isRewardClaimed ? '奖励已领取 ✓' : isFinished ? '可领取完赛奖励' : '完赛奖励'}
+                </Text>
+                <Text className={styles.rewardDesc}>{activity.reward}</Text>
+                {isFinished && !isRewardClaimed && (
+                  <Text className={styles.claimHint}>点击领取，前往奖励中心查看</Text>
+                )}
+              </View>
+              {isFinished && !isRewardClaimed && (
+                <Text style={{ fontSize: '32rpx', color: '#FF6B35' }}>›</Text>
+              )}
             </View>
           </View>
         )}

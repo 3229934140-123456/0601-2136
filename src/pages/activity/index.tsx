@@ -3,9 +3,9 @@ import { View, Text, Image, ScrollView, Input } from '@tarojs/components';
 import Taro from '@tarojs/taro';
 import classnames from 'classnames';
 import styles from './index.module.scss';
-import { activities } from '@/data/activities';
 import type { Activity } from '@/types';
 import { getStatusText } from '@/utils';
+import { useAppStore } from '@/store';
 
 const tabs = [
   { key: 'all', label: '全部' },
@@ -15,6 +15,7 @@ const tabs = [
 ];
 
 const ActivityPage: React.FC = () => {
+  const activities = useAppStore(s => s.activities);
   const [activeTab, setActiveTab] = useState<string>('all');
   const [searchText, setSearchText] = useState<string>('');
 
@@ -34,7 +35,7 @@ const ActivityPage: React.FC = () => {
     }
     
     return result;
-  }, [activeTab, searchText]);
+  }, [activeTab, searchText, activities]);
 
   const handleActivityClick = (id: string) => {
     console.log('[Activity] 点击活动:', id);

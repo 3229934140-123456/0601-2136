@@ -2,42 +2,48 @@ import React from 'react';
 import { View, Text, Image, ScrollView } from '@tarojs/components';
 import Taro from '@tarojs/taro';
 import styles from './index.module.scss';
-import { currentUser } from '@/data/user';
 import { badges } from '@/data/rewards';
-import { getLevelColor } from '@/utils';
+import { useAppStore } from '@/store';
 
 const MinePage: React.FC = () => {
+  const { user, notifications } = useAppStore();
+
   const handleRewardClick = () => {
-    console.log('[Mine] 点击奖励兑换');
-    Taro.navigateTo({
-      url: '/pages/reward/index'
-    });
+    Taro.navigateTo({ url: '/pages/reward/index' });
   };
 
   const handleAdminClick = () => {
-    console.log('[Mine] 点击运营后台');
-    Taro.navigateTo({
-      url: '/pages/admin/index'
-    });
+    Taro.navigateTo({ url: '/pages/admin/index' });
   };
 
   const handleMenuClick = (key: string) => {
-    console.log('[Mine] 点击菜单:', key);
-    Taro.showToast({
-      title: '功能开发中',
-      icon: 'none'
-    });
+    if (key === 'notifications') {
+      Taro.navigateTo({ url: '/pages/notifications/index' });
+      return;
+    }
+    if (key === 'records') {
+      Taro.switchTab({ url: '/pages/checkin/index' });
+      return;
+    }
+    Taro.showToast({ title: '功能开发中', icon: 'none' });
   };
 
   const myBadges = badges.filter(b => b.obtainDate);
   const lockedBadges = badges.filter(b => !b.obtainDate);
   const displayBadges = [...myBadges, ...lockedBadges.slice(0, 4 - myBadges.length)];
+  const unreadCount = notifications.filter(n => !n.isRead).length;
 
   const menuItems = [
     { icon: '🏃', title: '我的活动', desc: '查看已报名的活动', key: 'activities' },
     { icon: '📋', title: '打卡记录', desc: '查看历史打卡', key: 'records' },
     { icon: '🏆', title: '我的成就', desc: '查看全部徽章', key: 'achievements' },
-    { icon: '🔔', title: '消息通知', desc: '活动提醒与消息', key: 'notifications' },
+    {
+      icon: '🔔',
+      title: '消息通知',
+      desc: unreadCount > 0 ? `${unreadCount}条未读消息` : '活动提醒与消息',
+      key: 'notifications',
+      badge: unreadCount > 0 ? unreadCount : undefined
+    },
     { icon: '⚙️', title: '设置', desc: '个人设置与隐私', key: 'settings' }
   ];
 
@@ -47,30 +53,30 @@ const MinePage: React.FC = () => {
         <View className={styles.userInfo}>
           <Image
             className={styles.avatar}
-            src={currentUser.avatar}
+            src={user.avatar}
             mode="aspectFill"
           />
           <View className={styles.userDetail}>
-            <Text className={styles.userName}>{currentUser.name}</Text>
+            <Text className={styles.userName}>{user.name}</Text>
             <View className={styles.levelInfo}>
               <Text className={styles.levelIcon}>⭐</Text>
-              <Text>Lv.{currentUser.level}</Text>
+              <Text>Lv.{user.level}</Text>
             </View>
           </View>
           <View className={styles.pointsInfo}>
             <Text className={styles.pointsIcon}>💰</Text>
-            <Text>{currentUser.totalPoints}积分</Text>
+            <Text>{user.totalPoints}积分</Text>
           </View>
         </View>
 
         <View className={styles.statsRow}>
           <View className={styles.statItem}>
-            <Text className={styles.statValue}>{currentUser.totalDistance.toFixed(1)}</Text>
+            <Text className={styles.statValue}>{user.totalDistance.toFixed(1)}</Text>
             <Text className={styles.statLabel}>总里程(km)</Text>
           </View>
           <View className={styles.statDivider} />
           <View className={styles.statItem}>
-            <Text className={styles.statValue}>{currentUser.totalCheckins}</Text>
+            <Text className={styles.statValue}>{user.totalCheckins}</Text>
             <Text className={styles.statLabel}>打卡次数</Text>
           </View>
           <View className={styles.statDivider} />
@@ -126,7 +132,12 @@ const MinePage: React.FC = () => {
               className={styles.menuItem}
               onClick={() => handleMenuClick(item.key)}
             >
-              <View className={styles.menuIcon}>{item.icon}</View>
+              <View className={styles.menuIcon}>
+                {item.icon}
+                {item.badge && item.badge > 0 && (
+                  <View className={styles.menuBadge}>{item.badge > 99 ? '99+' : item.badge}</View>
+                )}
+              </View>
               <View className={styles.menuContent}>
                 <Text className={styles.menuTitle}>{item.title}</Text>
                 <Text className={styles.menuDesc}>{item.desc}</Text>
@@ -137,7 +148,7 @@ const MinePage: React.FC = () => {
         </View>
       </View>
 
-      {currentUser.isAdmin && (
+      {user.isAdmin && (
         <View className={styles.adminEntry} onClick={handleAdminClick}>
           <Text className={styles.adminIcon}>🛠️</Text>
           <View className={styles.adminInfo}>

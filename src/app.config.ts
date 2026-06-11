@@ -8,7 +8,12 @@ export default defineAppConfig({
     'pages/activity-detail/index',
     'pages/reward/index',
     'pages/admin/index',
-    'pages/activity-result/index'
+    'pages/activity-result/index',
+    'pages/admin-create/index',
+    'pages/checkin-form/index',
+    'pages/team-create/index',
+    'pages/team-join/index',
+    'pages/notifications/index'
   ],
   window: {
     backgroundTextStyle: 'light',

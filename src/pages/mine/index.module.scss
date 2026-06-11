@@ -203,6 +203,22 @@
   margin-right: $spacing-md;
   background: $color-bg-page;
   border-radius: $radius-md;
+  position: relative;
+}
+
+.menuBadge {
+  position: absolute;
+  top: -8rpx;
+  right: -12rpx;
+  min-width: 32rpx;
+  height: 32rpx;
+  padding: 0 8rpx;
+  background: $color-error;
+  color: $color-text-white;
+  font-size: 20rpx;
+  border-radius: 16rpx;
+  text-align: center;
+  line-height: 32rpx;
 }
 
 .menuContent {
@@ -212,12 +228,14 @@
 .menuTitle {
   font-size: $font-size-md;
   color: $color-text-primary;
+  display: block;
 }
 
 .menuDesc {
   font-size: $font-size-xs;
   color: $color-text-tertiary;
   margin-top: 4rpx;
+  display: block;
 }
 
 .menuArrow {

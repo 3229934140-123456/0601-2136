@@ -210,9 +210,17 @@
   }
 }
 
-.badgeName {
-  font-size: $font-size-xs;
-  color: $color-text-secondary;
+.badgeItem {
+  &.badgeLocked {
+    opacity: 0.5;
+    filter: grayscale(100%);
+  }
+}
+
+.badgeCond {
+  font-size: 20rpx;
+  color: $color-text-tertiary;
+  margin-top: 4rpx;
   @include text-ellipsis;
 }
 
@@ -226,15 +234,10 @@
   box-shadow: $shadow-card;
 }
 
-.recordIcon {
-  width: 64rpx;
-  height: 64rpx;
+.recordImg {
+  width: 96rpx;
+  height: 96rpx;
   border-radius: $radius-md;
-  background: $color-bg-page;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 32rpx;
   margin-right: $spacing-md;
 }
 
@@ -253,8 +256,18 @@
   color: $color-text-tertiary;
 }
 
+.recordRight {
+  text-align: right;
+}
+
 .recordPoints {
   font-size: $font-size-md;
   font-weight: $font-weight-semibold;
   color: $color-primary;
+  margin-bottom: 4rpx;
+}
+
+.recordStatus {
+  font-size: $font-size-xs;
+  color: #00b42a;
 }

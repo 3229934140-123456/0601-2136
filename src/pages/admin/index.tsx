@@ -1,9 +1,9 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { View, Text, Image, ScrollView, Button } from '@tarojs/components';
 import Taro from '@tarojs/taro';
 import classnames from 'classnames';
 import styles from './index.module.scss';
-import { activities } from '@/data/activities';
+import { useAppStore } from '@/store';
 import { getStatusText } from '@/utils';
 
 const sponsorMaterials = [
@@ -14,57 +14,86 @@ const sponsorMaterials = [
 ];
 
 const AdminPage: React.FC = () => {
-  const [activeSection, setActiveSection] = useState<string>('overview');
+  const { activities, exportWinners, pushNotification } = useAppStore();
 
   const handleCreateActivity = () => {
-    console.log('[Admin] 创建活动');
-    Taro.showToast({
-      title: '活动发布功能开发中',
-      icon: 'none'
+    Taro.navigateTo({ url: '/pages/admin-create/index' });
+  };
+
+  const handleExport = () => {
+    const ongoingList = activities.filter(a => a.status === 'ongoing' || a.status === 'ended');
+    if (ongoingList.length === 0) {
+      Taro.showToast({ title: '暂无可导出的活动', icon: 'none' });
+      return;
+    }
+    const activity = ongoingList[0];
+    const content = exportWinners(activity.id);
+    Taro.showModal({
+      title: `${activity.title} - 获奖名单`,
+      content: content.slice(0, 800) + (content.length > 800 ? '\n...(内容过长，已截断)' : ''),
+      showCancel: true,
+      cancelText: '关闭',
+      confirmText: '复制全文',
+      success: (res) => {
+        if (res.confirm) {
+          Taro.setClipboardData({
+            data: content,
+            success: () => Taro.showToast({ title: '已复制到剪贴板', icon: 'success' })
+          });
+        }
+      }
     });
   };
 
+  const handlePushNotif = () => {
+    const upcoming = activities.filter(a => a.status === 'upcoming');
+    if (upcoming.length === 0) {
+      Taro.showToast({ title: '暂无可推送的活动', icon: 'none' });
+      return;
+    }
+    const activity = upcoming[0];
+    pushNotification({
+      title: `${activity.title} 即将开跑！`,
+      content: `${activity.title} 将于明天准时开始，记得做好热身准备，准时打卡哦！活动目标：${activity.targetDistance}km`,
+      type: 'activity',
+      activityId: activity.id
+    });
+    Taro.showToast({ title: '提醒已推送', icon: 'success' });
+  };
+
   const handleMenuClick = (key: string) => {
-    console.log('[Admin] 点击功能:', key);
-    setActiveSection(key);
-    
     const actions: Record<string, () => void> = {
       statistics: () => Taro.showToast({ title: '数据统计功能开发中', icon: 'none' }),
-      export: () => {
-        Taro.showModal({
-          title: '导出获奖名单',
-          content: '确定要导出当前活动的获奖名单吗？',
-          success: (res) => {
-            if (res.confirm) {
-              Taro.showLoading({ title: '导出中...' });
-              setTimeout(() => {
-                Taro.hideLoading();
-                Taro.showToast({ title: '导出成功', icon: 'success' });
-              }, 1500);
-            }
-          }
-        });
-      },
+      export: handleExport,
       materials: () => Taro.showToast({ title: '物料管理功能开发中', icon: 'none' }),
       badges: () => Taro.showToast({ title: '徽章发放功能开发中', icon: 'none' }),
-      notifications: () => Taro.showToast({ title: '消息推送功能开发中', icon: 'none' }),
+      notifications: handlePushNotif,
       report: () => Taro.showToast({ title: '举报处理功能开发中', icon: 'none' })
     };
-    
-    if (actions[key]) {
-      actions[key]();
-    }
+    if (actions[key]) actions[key]();
   };
 
   const handleActivityClick = (id: string) => {
-    console.log('[Admin] 管理活动:', id);
+    const activity = activities.find(a => a.id === id);
+    if (!activity) return;
     Taro.showActionSheet({
-      itemList: ['查看详情', '编辑活动', '推送提醒', '结束活动'],
+      itemList: ['查看详情', '推送开跑提醒', '导出获奖名单'],
       success: (res) => {
-        if (res.tapIndex !== undefined) {
-          Taro.showToast({
-            title: '操作成功',
-            icon: 'success'
+        if (res.tapIndex === 0) {
+          Taro.navigateTo({ url: `/pages/activity-detail/index?id=${id}` });
+        } else if (res.tapIndex === 1) {
+          pushNotification({
+            title: `${activity.title} 开跑提醒`,
+            content: `${activity.title} 活动目标${activity.targetDistance}km，请大家准时参加！`,
+            type: 'activity',
+            activityId: activity.id
+          });
+          Taro.showToast({ title: '提醒已推送', icon: 'success' });
+        } else if (res.tapIndex === 2) {
+          const content = exportWinners(activity.id);
+          Taro.setClipboardData({
+            data: content,
+            success: () => Taro.showToast({ title: '名单已复制', icon: 'success' })
           });
         }
       }

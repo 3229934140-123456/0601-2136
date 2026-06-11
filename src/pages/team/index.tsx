@@ -1,24 +1,31 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { View, Text, Image, ScrollView, Button } from '@tarojs/components';
 import Taro from '@tarojs/taro';
 import classnames from 'classnames';
 import styles from './index.module.scss';
-import { teams } from '@/data/teams';
-import { currentUser } from '@/data/user';
-import type { Team, TeamMember } from '@/types';
+import { useAppStore } from '@/store';
+import type { TeamMember } from '@/types';
+import { formatDate } from '@/utils';
 
 const TeamPage: React.FC = () => {
-  const [myTeam] = useState<Team | undefined>(teams[0]);
+  const { teams, user, inviteTeammate } = useAppStore();
+
+  const myTeam = user.teamId ? teams.find(t => t.id === user.teamId) : undefined;
 
   const handleInvite = () => {
-    console.log('[Team] 邀请队友');
-    Taro.showActionSheet({
-      itemList: ['微信分享', '生成邀请码', '复制链接'],
+    if (!myTeam) return;
+    const code = inviteTeammate(myTeam.id);
+    Taro.showModal({
+      title: '邀请好友加入',
+      content: `邀请码：${code}\n\n发送邀请码给好友，好友在"加入队伍"页面输入即可加入\n队伍：${myTeam.name}`,
+      showCancel: true,
+      cancelText: '知道了',
+      confirmText: '复制邀请码',
       success: (res) => {
-        if (res.tapIndex !== undefined) {
-          Taro.showToast({
-            title: '邀请方式已复制',
-            icon: 'success'
+        if (res.confirm) {
+          Taro.setClipboardData({
+            data: code,
+            success: () => Taro.showToast({ title: '已复制', icon: 'success' })
           });
         }
       }
@@ -26,43 +33,27 @@ const TeamPage: React.FC = () => {
   };
 
   const handleTeamManage = () => {
-    console.log('[Team] 队伍管理');
-    Taro.showToast({
-      title: '队伍管理功能开发中',
-      icon: 'none'
+    if (!myTeam) return;
+    const memberNames = myTeam.members.map((m, i) =>
+      `${i + 1}. ${m.name}${m.role === 'leader' ? '（队长）' : ''} - ${m.totalDistance.toFixed(1)}km`
+    ).join('\n');
+    Taro.showModal({
+      title: `${myTeam.name} - 队伍管理`,
+      content: `队伍成员（共${myTeam.memberCount}人）：\n${memberNames}\n\n点击"邀请队友"可获取邀请码`,
+      showCancel: false,
+      confirmText: '好的'
     });
   };
 
   const handleCreateTeam = () => {
-    console.log('[Team] 创建队伍');
-    Taro.showModal({
-      title: '创建队伍',
-      content: '确定要创建新队伍吗？',
-      success: (res) => {
-        if (res.confirm) {
-          Taro.showToast({
-            title: '创建成功',
-            icon: 'success'
-          });
-        }
-      }
-    });
+    Taro.navigateTo({ url: '/pages/team-create/index' });
   };
 
   const handleJoinTeam = () => {
-    console.log('[Team] 加入队伍');
-    Taro.showActionSheet({
-      itemList: ['搜索队伍', '输入邀请码', '浏览热门队伍'],
-      success: (res) => {
-        if (res.tapIndex !== undefined) {
-          Taro.showToast({
-            title: '功能开发中',
-            icon: 'none'
-          });
-        }
-      }
-    });
+    Taro.navigateTo({ url: '/pages/team-join/index' });
   };
+
+  const sortedRanking = [...teams].sort((a, b) => b.totalDistance - a.totalDistance);
 
   if (!myTeam) {
     return (
@@ -74,6 +65,7 @@ const TeamPage: React.FC = () => {
           <View style={{ textAlign: 'center', padding: '80rpx 0', background: '#fff', borderRadius: '16rpx' }}>
             <Text style={{ fontSize: '64rpx' }}>👥</Text>
             <Text style={{ display: 'block', marginTop: '24rpx', color: '#86909c' }}>还没有加入任何队伍</Text>
+            <Text style={{ display: 'block', marginTop: '12rpx', fontSize: '24rpx', color: '#c9cdd4' }}>创建或加入队伍，一起跑步更有动力！</Text>
           </View>
         </View>
 
@@ -83,15 +75,15 @@ const TeamPage: React.FC = () => {
             <Text className={styles.sectionMore}>查看全部</Text>
           </View>
           <View className={styles.rankingList}>
-            {teams.map((team, index) => (
+            {sortedRanking.map((team, index) => (
               <View key={team.id} className={styles.rankingItem}>
                 <Text className={classnames(styles.rankNum, index < 3 && styles[`top${index + 1}`])}>
-                  {team.rank}
+                  {index + 1}
                 </Text>
                 <Image className={styles.rankingAvatar} src={team.avatar} mode="aspectFill" />
                 <View className={styles.rankingInfo}>
                   <Text className={styles.rankingName}>{team.name}</Text>
-                  <Text className={styles.rankingMembers}>{team.memberCount}人 · {team.leaderName}</Text>
+                  <Text className={styles.rankingMembers}>{team.memberCount}人 · 队长{team.leaderName}</Text>
                 </View>
                 <Text className={styles.rankingDistance}>{team.totalDistance.toFixed(1)}km</Text>
               </View>
@@ -111,6 +103,8 @@ const TeamPage: React.FC = () => {
     );
   }
 
+  const sortedMembers = [...myTeam.members].sort((a, b) => b.totalDistance - a.totalDistance);
+
   return (
     <ScrollView className={styles.page} scrollY>
       <View className={styles.myTeamCard}>
@@ -120,7 +114,7 @@ const TeamPage: React.FC = () => {
             <Text className={styles.teamName}>{myTeam.name}</Text>
             <Text className={styles.teamSlogan}>{myTeam.slogan}</Text>
           </View>
-          <View className={styles.teamRank}>No.{myTeam.rank}</View>
+          <View className={styles.teamRank}>No.{sortedRanking.findIndex(t => t.id === myTeam.id) + 1 || myTeam.rank}</View>
         </View>
 
         <View className={styles.teamStats}>
@@ -133,7 +127,7 @@ const TeamPage: React.FC = () => {
             <Text className={styles.teamStatLabel}>总里程(km)</Text>
           </View>
           <View className={styles.teamStatItem}>
-            <Text className={styles.teamStatValue}>Lv.{currentUser.level}</Text>
+            <Text className={styles.teamStatValue}>Lv.{user.level}</Text>
             <Text className={styles.teamStatLabel}>队伍等级</Text>
           </View>
         </View>
@@ -154,7 +148,7 @@ const TeamPage: React.FC = () => {
           <Text className={styles.sectionMore}>全部{myTeam.memberCount}人</Text>
         </View>
         <View className={styles.membersList}>
-          {myTeam.members.slice(0, 5).map((member: TeamMember, index) => (
+          {sortedMembers.slice(0, 5).map((member: TeamMember, index) => (
             <View key={member.id} className={styles.memberItem}>
               <Image className={styles.memberAvatar} src={member.avatar} mode="aspectFill" />
               <View className={styles.memberInfo}>
@@ -164,7 +158,9 @@ const TeamPage: React.FC = () => {
                     <Text className={styles.roleBadge}>队长</Text>
                   )}
                 </Text>
-                <Text className={styles.memberDistance}>{member.totalDistance.toFixed(1)}km · 加入于 {member.joinTime}</Text>
+                <Text className={styles.memberDistance}>
+                  {member.totalDistance.toFixed(1)}km · 加入于 {formatDate(member.joinTime)}
+                </Text>
               </View>
               <Text className={styles.memberRank}>#{index + 1}</Text>
             </View>
@@ -178,10 +174,10 @@ const TeamPage: React.FC = () => {
           <Text className={styles.sectionMore}>查看全部</Text>
         </View>
         <View className={styles.rankingList}>
-          {teams.slice(0, 5).map((team, index) => (
+          {sortedRanking.slice(0, 5).map((team, index) => (
             <View key={team.id} className={styles.rankingItem}>
               <Text className={classnames(styles.rankNum, index < 3 && styles[`top${index + 1}`])}>
-                {team.rank}
+                {index + 1}
               </Text>
               <Image className={styles.rankingAvatar} src={team.avatar} mode="aspectFill" />
               <View className={styles.rankingInfo}>

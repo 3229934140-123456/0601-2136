@@ -3,53 +3,56 @@ import { View, Text, Image, ScrollView, Button } from '@tarojs/components';
 import Taro from '@tarojs/taro';
 import classnames from 'classnames';
 import styles from './index.module.scss';
-import { rewards, badges } from '@/data/rewards';
-import { currentUser } from '@/data/user';
+import { useAppStore } from '@/store';
+import { badges } from '@/data/rewards';
 import type { Reward } from '@/types';
+import { formatDateTime } from '@/utils';
 
 const tabs = [
   { key: 'prize', label: '实物奖品' },
   { key: 'coupon', label: '优惠券' },
-  { key: 'badge', label: '徽章' }
+  { key: 'badge', label: '徽章' },
+  { key: 'record', label: '兑换记录' }
 ];
 
 const RewardPage: React.FC = () => {
+  const { rewards, user, exchangeRecords, exchangeReward, pushNotification } = useAppStore();
   const [activeTab, setActiveTab] = useState<string>('prize');
-  const [userPoints, setUserPoints] = useState<number>(currentUser.totalPoints);
 
   const filteredRewards = useMemo(() => {
-    if (activeTab === 'badge') return [];
+    if (activeTab === 'badge' || activeTab === 'record') return [];
     return rewards.filter(item => {
       if (activeTab === 'prize') return item.category === 'prize';
       if (activeTab === 'coupon') return item.category === 'coupon';
       return true;
     });
-  }, [activeTab]);
+  }, [activeTab, rewards]);
 
   const handleExchange = (reward: Reward) => {
-    console.log('[Reward] 兑换奖品:', reward.name);
-    if (userPoints < reward.points) {
-      Taro.showToast({
-        title: '积分不足',
-        icon: 'none'
-      });
+    if (user.totalPoints < reward.points) {
+      Taro.showToast({ title: '积分不足', icon: 'none' });
       return;
     }
-
+    if (reward.stock <= 0) {
+      Taro.showToast({ title: '库存不足', icon: 'none' });
+      return;
+    }
     Taro.showModal({
       title: '确认兑换',
       content: `确定用 ${reward.points} 积分兑换"${reward.name}"吗？`,
       success: (res) => {
         if (res.confirm) {
-          Taro.showLoading({ title: '兑换中...' });
-          setTimeout(() => {
-            Taro.hideLoading();
-            setUserPoints(prev => prev - reward.points);
-            Taro.showToast({
-              title: '兑换成功！',
-              icon: 'success'
+          const result = exchangeReward(reward.id);
+          if (result.success) {
+            pushNotification({
+              title: '兑换成功',
+              content: `您已成功兑换"${reward.name}"，消耗${reward.points}积分，可在兑换记录中查看。`,
+              type: 'reward'
             });
-          }, 1000);
+            Taro.showToast({ title: result.message, icon: 'success' });
+          } else {
+            Taro.showToast({ title: result.message, icon: 'none' });
+          }
         }
       }
     });
@@ -67,7 +70,7 @@ const RewardPage: React.FC = () => {
       <View className={styles.header}>
         <View className={styles.pointsCard}>
           <Text className={styles.pointsLabel}>我的积分</Text>
-          <Text className={styles.pointsValue}>{userPoints}</Text>
+          <Text className={styles.pointsValue}>{user.totalPoints}</Text>
           <Text className={styles.pointsUnit}>积分可用于兑换奖品和优惠券</Text>
         </View>
       </View>
@@ -84,7 +87,7 @@ const RewardPage: React.FC = () => {
         ))}
       </View>
 
-      {activeTab !== 'badge' && (
+      {(activeTab === 'prize' || activeTab === 'coupon') && (
         <View className={styles.goodsGrid}>
           {filteredRewards.map((reward) => (
             <View key={reward.id} className={styles.goodsCard}>
@@ -106,7 +109,7 @@ const RewardPage: React.FC = () => {
                   <Button
                     className={classnames(
                       styles.exchangeButton,
-                      (userPoints < reward.points || reward.stock <= 0) && styles.disabled
+                      (user.totalPoints < reward.points || reward.stock <= 0) && styles.disabled
                     )}
                     onClick={() => handleExchange(reward)}
                   >
@@ -127,14 +130,44 @@ const RewardPage: React.FC = () => {
           </Text>
           <View className={styles.badgeList}>
             {allBadges.map((badge) => (
-              <View key={badge.id} className={styles.badgeItem}>
+              <View key={badge.id} className={classnames(styles.badgeItem, !badge.obtainDate && styles.badgeLocked)}>
                 <View className={`${styles.badgeIcon} ${styles[badge.level]}`}>
                   {badge.icon}
                 </View>
                 <Text className={styles.badgeName}>{badge.name}</Text>
+                <Text className={styles.badgeCond}>
+                  {badge.obtainDate ? `获得于${badge.obtainDate}` : badge.condition}
+                </Text>
               </View>
             ))}
           </View>
+        </View>
+      )}
+
+      {activeTab === 'record' && (
+        <View className={styles.section}>
+          <Text className={styles.sectionTitle}>兑换记录</Text>
+          {exchangeRecords.length === 0 ? (
+            <View style={{ textAlign: 'center', padding: '80rpx 0', color: '#86909c' }}>
+              暂无兑换记录
+            </View>
+          ) : (
+            <View>
+              {exchangeRecords.map(record => (
+                <View key={record.id} className={styles.recordItem}>
+                  <Image className={styles.recordImg} src={record.rewardImage} mode="aspectFill" />
+                  <View className={styles.recordInfo}>
+                    <Text className={styles.recordName}>{record.rewardName}</Text>
+                    <Text className={styles.recordTime}>{formatDateTime(record.exchangeTime)}</Text>
+                  </View>
+                  <View className={styles.recordRight}>
+                    <Text className={styles.recordPoints}>-{record.points}积分</Text>
+                    <Text className={styles.recordStatus}>已完成</Text>
+                  </View>
+                </View>
+              ))}
+            </View>
+          )}
         </View>
       )}
     </ScrollView>
